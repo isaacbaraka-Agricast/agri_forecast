@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agri Forecast — Musanze District</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --forest:   #0d3b0d;
+  --leaf:     #1a6e1a;
+  --sprout:   #29a329;
+  --lime:     #78c93a;
+  --clay:     #b5652a;
+  --straw:    #d4a017;
+  --sky-pale: #e8f5e9;
+  --red:      #c0392b;
+  --amber:    #e67e22;
+  --blue:     #2471a3;
+  --bg:       #f7f9f4;
+  --card:     #ffffff;
+  --text:     #0f1f0f;
+  --muted:    #567056;
+  --border:   #d0e0d0;
+  --shadow:   0 2px 12px rgba(13,59,13,.08);
+  --radius:   10px;
+  --nav-h:    62px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;}
+::selection{background:var(--lime);color:var(--forest);}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ─── HEADER ──────────────────────────────────────────────── */
+.header{
+  background:var(--forest);
+  color:#fff;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+  position:sticky;top:0;z-index:200;
+  border-bottom:2px solid var(--leaf);
+}
+.hdr-brand{display:flex;align-items:center;gap:14px;}
+.hdr-logo{font-size:2rem;line-height:1;filter:drop-shadow(0 0 6px rgba(120,201,58,.4));}
+.hdr-title{font-family:'Playfair Display',serif;font-size:1.3rem;letter-spacing:.2px;color:#e8f5e9;}
+.hdr-sub{font-size:.72rem;color:#89b889;margin-top:1px;font-family:'IBM Plex Mono',monospace;}
+.hdr-actions{display:flex;align-items:center;gap:16px;}
+.lang-wrap{display:flex;align-items:center;gap:7px;font-size:.78rem;color:#89b889;}
+.lang-switch{position:relative;width:38px;height:20px;cursor:pointer;}
+.lang-switch input{opacity:0;width:0;height:0;}
+.lang-slider{position:absolute;inset:0;background:rgba(255,255,255,.15);border-radius:20px;transition:.25s;}
+.lang-slider::before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;left:3px;top:3px;transition:.25s;}
+input:checked+.lang-slider{background:var(--straw);}
+input:checked+.lang-slider::before{transform:translateX(18px);}
+.api-badge{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  border-radius:20px;padding:5px 12px;font-size:.74rem;color:#89b889;
+  font-family:'IBM Plex Mono',monospace;
+}
+.pulse{width:7px;height:7px;border-radius:50%;background:#78c93a;animation:pulse 2s infinite;}
+.pulse.off{background:#c0392b;animation:none;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+
+/* ─── NAV ──────────────────────────────────────────────────── */
+.nav{
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  display:flex;overflow-x:auto;position:sticky;top:64px;z-index:100;
+  box-shadow:0 1px 8px rgba(0,0,0,.05);
+}
+.nav::-webkit-scrollbar{height:0;}
+.nav-tab{
+  display:flex;align-items:center;gap:8px;
+  padding:0 20px;height:var(--nav-h);
+  font-size:.84rem;font-weight:500;cursor:pointer;
+  border-bottom:3px solid transparent;white-space:nowrap;
+  color:var(--muted);transition:all .18s;
+}
+.nav-tab:hover{color:var(--leaf);background:#f7faf7;}
+.nav-tab.active{color:var(--leaf);border-bottom-color:var(--sprout);background:#f0f9f0;font-weight:600;}
+.nav-icon{font-size:1rem;}
+
+/* ─── LAYOUT ────────────────────────────────────────────────── */
+.page{max-width:1240px;margin:0 auto;padding:26px 22px 60px;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* ─── GRID HELPERS ──────────────────────────────────────────── */
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.grid-2-3{display:grid;grid-template-columns:2fr 3fr;gap:20px;margin-bottom:20px;}
+@media(max-width:760px){.grid-2,.grid-2-3{grid-template-columns:1fr;}}
+
+/* ─── CARDS ─────────────────────────────────────────────────── */
+.card{background:var(--card);border-radius:var(--radius);padding:22px 20px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px;}
+.card.dark{background:var(--forest);border-color:var(--leaf);}
+.card-title{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--forest);margin-bottom:3px;}
+.card.dark .card-title{color:#d4f0d4;}
+.card-sub{font-size:.78rem;color:var(--muted);margin-bottom:16px;}
+.card.dark .card-sub{color:#89b889;}
+
+/* ─── STAT CARDS ─────────────────────────────────────────────── */
+.stat-card{
+  background:var(--card);border-radius:var(--radius);
+  padding:18px 16px 16px;
+  box-shadow:var(--shadow);border:1px solid var(--border);
+  display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;
+  position:relative;overflow:hidden;
+  transition:transform .15s;cursor:default;
+}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--sprout),var(--lime));
+}
+.stat-card:hover{transform:translateY(-2px);}
+.stat-icon{font-size:1.8rem;line-height:1;margin-top:2px;}
+.stat-val{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--forest);line-height:1;}
+.stat-lbl{font-size:.74rem;color:var(--muted);margin-top:4px;}
+.stat-change{font-size:.72rem;font-weight:600;margin-top:6px;}
+.stat-change.up{color:var(--sprout);}
+.stat-change.down{color:var(--red);}
+
+/* ─── CONTROLS ──────────────────────────────────────────────── */
+.ctrl-bar{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:0;}
+.ctrl-group{display:flex;flex-direction:column;gap:5px;}
+.ctrl-label{font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;}
+select,input[type=text]{
+  padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:.88rem;color:var(--text);background:#fff;
+  font-family:'IBM Plex Sans',sans-serif;min-width:170px;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+select:focus,input:focus{border-color:var(--sprout);box-shadow:0 0 0 3px rgba(41,163,41,.12);}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 20px;border:none;border-radius:8px;cursor:pointer;
+  font-size:.88rem;font-weight:600;font-family:'IBM Plex Sans',sans-serif;
+  transition:all .15s;white-space:nowrap;
+}
+.btn-primary{background:var(--leaf);color:#fff;}
+.btn-primary:hover{background:var(--sprout);transform:translateY(-1px);box-shadow:0 4px 12px rgba(41,163,41,.3);}
+.btn-primary:active{transform:translateY(0);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.btn-secondary{background:#f0f9f0;color:var(--leaf);border:1.5px solid var(--border);}
+.btn-secondary:hover{border-color:var(--sprout);background:#e4f5e4;}
+.btn-ghost{background:transparent;color:var(--muted);padding:9px 14px;}
+.btn-ghost:hover{color:var(--leaf);background:#f0f9f0;}
+
+/* ─── CHART WRAPS ────────────────────────────────────────────── */
+.chart-wrap{position:relative;}
+.chart-wrap.h240{height:240px;}
+.chart-wrap.h300{height:300px;}
+.chart-wrap.h360{height:360px;}
+.chart-wrap.h180{height:180px;}
+
+/* ─── METRICS ROW ────────────────────────────────────────────── */
+.metrics-strip{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+.m-chip{
+  padding:10px 14px;border-radius:8px;text-align:center;min-width:100px;
+  background:var(--sky-pale);border:1px solid var(--border);
+  flex:1;
+}
+.m-chip-val{font-family:'IBM Plex Mono',monospace;font-size:1.2rem;font-weight:500;color:var(--forest);}
+.m-chip-lbl{font-size:.7rem;color:var(--muted);margin-top:3px;}
+
+/* ─── ADVICE BOX ─────────────────────────────────────────────── */
+.advice{
+  background:#f0faf0;
+  border-left:4px solid var(--sprout);
+  border-radius:0 8px 8px 0;
+  padding:14px 18px;margin-top:16px;
+}
+.advice-icon{font-size:1.3rem;display:inline-block;margin-bottom:5px;}
+.advice p{font-size:.86rem;line-height:1.8;color:#2d4a2d;}
+
+/* ─── TABLE ──────────────────────────────────────────────────── */
+.tbl-scroll{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:.84rem;}
+thead th{
+  background:#f0f9f0;padding:10px 14px;text-align:left;
+  font-weight:600;color:var(--forest);border-bottom:1.5px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{padding:9px 14px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:#fafdf8;}
+
+/* ─── BADGE ──────────────────────────────────────────────────── */
+.badge{
+  display:inline-block;padding:2px 9px;border-radius:12px;
+  font-size:.72rem;font-weight:600;white-space:nowrap;
+}
+.badge-high  {background:#d4edda;color:#155724;}
+.badge-med   {background:#fff3cd;color:#856404;}
+.badge-low   {background:#f8d7da;color:#721c24;}
+.badge-stable{background:#cce5ff;color:#004085;}
+.badge-a{background:#e8f5e9;color:#1b5e20;}
+.badge-b{background:#fffde7;color:#f57f17;}
+.badge-c{background:#fce4ec;color:#880e4f;}
+
+/* ─── SPINNER ────────────────────────────────────────────────── */
+.spinner-wrap{display:none;flex-direction:column;align-items:center;gap:12px;padding:44px 20px;color:var(--muted);font-size:.84rem;}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--sprout);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ─── ERROR BOX ──────────────────────────────────────────────── */
+.err{display:none;background:#fdecea;color:#9b1c1c;border:1px solid #f5c2c7;border-radius:8px;padding:11px 14px;font-size:.84rem;margin-top:10px;}
+.err::before{content:'⚠ ';}
+
+/* ─── CROP GRID ──────────────────────────────────────────────── */
+.crop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+.crop-tile{
+  background:var(--card);border-radius:10px;padding:16px 12px;text-align:center;
+  border:1.5px solid var(--border);cursor:pointer;
+  transition:all .18s;
+}
+.crop-tile:hover{border-color:var(--sprout);transform:translateY(-2px);box-shadow:0 4px 14px rgba(41,163,41,.15);}
+.crop-tile.active-tile{border-color:var(--leaf);background:#f0f9f0;}
+.crop-emoji{font-size:2rem;display:block;margin-bottom:7px;}
+.crop-name{font-size:.8rem;font-weight:600;color:var(--forest);}
+.crop-price{font-size:.73rem;color:var(--muted);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
+
+/* ─── SECTOR BARS ────────────────────────────────────────────── */
+.sector-bars{margin-top:8px;}
+.sector-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.sector-label{width:76px;font-size:.78rem;color:var(--muted);flex-shrink:0;}
+.sector-bar-bg{flex:1;background:#e8f0e8;border-radius:4px;height:12px;overflow:hidden;}
+.sector-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--leaf),var(--lime));transition:width .6s cubic-bezier(.4,0,.2,1);}
+.sector-val{width:82px;font-size:.76rem;font-weight:600;color:var(--forest);text-align:right;font-family:'IBM Plex Mono',monospace;flex-shrink:0;}
+
+/* ─── COMPARE TABLE ──────────────────────────────────────────── */
+.compare-tbl thead th{background:var(--forest);color:#d4f0d4;}
+.compare-tbl .best-row td{background:#f0f9f0;font-weight:600;}
+
+/* ─── ALERT CARDS ─────────────────────────────────────────────── */
+.alert-card{
+  border-radius:10px;padding:16px;margin-bottom:12px;
+  border-left:5px solid transparent;background:#fff;
+  box-shadow:var(--shadow);border:1px solid var(--border);
+  animation:fadeUp .3s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.alert-card.high  {border-left-color:var(--red);}
+.alert-card.medium{border-left-color:var(--amber);}
+.alert-card.low   {border-left-color:var(--straw);}
+.alert-card.info  {border-left-color:var(--blue);}
+.alert-title{font-weight:600;font-size:.92rem;color:var(--forest);margin-bottom:6px;}
+.alert-msg{font-size:.82rem;line-height:1.75;color:#3a5a3a;}
+
+/* ─── WELCOME BANNER ─────────────────────────────────────────── */
+.welcome{
+  background:linear-gradient(135deg,var(--forest) 0%,#1a5c1a 60%,#1f7a1f 100%);
+  border-radius:12px;padding:28px 28px;color:#fff;margin-bottom:22px;
+  position:relative;overflow:hidden;
+}
+.welcome::after{
+  content:'🌿';position:absolute;right:24px;top:50%;transform:translateY(-50%);
+  font-size:5rem;opacity:.12;
+}
+.welcome-title{font-family:'Playfair Display',serif;font-size:1.6rem;color:#e8f5e9;margin-bottom:6px;}
+.welcome-sub{font-size:.84rem;color:#89b889;max-width:550px;line-height:1.7;}
+.season-pill{
+  display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+  border-radius:20px;padding:4px 14px;font-size:.76rem;color:#c8e8c8;margin-top:12px;
+  font-family:'IBM Plex Mono',monospace;
+}
+
+/* ─── MINI LEGEND ─────────────────────────────────────────────── */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;font-size:.75rem;color:var(--muted);}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:10px;height:10px;border-radius:2px;}
+
+/* ─── TABS ─────────────────────────────────────────────────────── */
+.inner-tabs{display:flex;gap:0;border-bottom:1.5px solid var(--border);margin-bottom:18px;}
+.inner-tab{
+  padding:9px 16px;font-size:.82rem;font-weight:500;cursor:pointer;
+  border-bottom:2.5px solid transparent;margin-bottom:-1.5px;color:var(--muted);
+  transition:all .15s;
+}
+.inner-tab.active{color:var(--leaf);border-bottom-color:var(--sprout);}
+
+/* ─── FORECAST TABLE ROWS ─────────────────────────────────────── */
+.demand-hi{background:#f0faf0 !important;}
+.demand-lo{background:#fff8f8 !important;}
+
+/* ─── FOOTER ──────────────────────────────────────────────────── */
+.footer{
+  text-align:center;padding:24px;color:var(--muted);font-size:.74rem;
+  border-top:1px solid var(--border);margin-top:40px;
+  font-family:'IBM Plex Mono',monospace;
+}
+
+/* ─── OVERVIEW SEASON STRIP ─────────────────────────────────────── */
+.season-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.season-card{
+  border-radius:10px;padding:14px 16px;border:1px solid var(--border);
+  background:var(--card);
+}
+.season-card.current{border-color:var(--sprout);background:#f0f9f0;}
+.season-letter{font-family:'Playfair Display',serif;font-size:2rem;color:var(--leaf);line-height:1;}
+.season-name{font-size:.78rem;font-weight:600;color:var(--forest);margin-top:3px;}
+.season-desc{font-size:.72rem;color:var(--muted);margin-top:3px;line-height:1.5;}
+
+/* ─── PROGRESS BAR ───────────────────────────────────────────── */
+.model-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.model-name-lbl{width:110px;font-size:.78rem;color:var(--muted);flex-shrink:0;}
+.model-bar-bg{flex:1;background:#e8f0e8;border-radius:3px;height:8px;overflow:hidden;}
+.model-bar-fill{height:100%;border-radius:3px;background:var(--sprout);transition:width .6s ease;}
+.model-mape-lbl{width:50px;font-size:.75rem;font-weight:600;text-align:right;color:var(--forest);font-family:'IBM Plex Mono',monospace;}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+  <div class="hdr-brand">
+    <div class="hdr-logo">🌾</div>
+    <div>
+      <div class="hdr-title">Agri Forecast System</div>
+      <div class="hdr-sub">MUSANZE DISTRICT · NORTHERN PROVINCE · RWANDA · v6.0</div>
+    </div>
+  </div>
+  <div class="hdr-actions">
+    <div class="lang-wrap">
+      <span>EN</span>
+      <label class="lang-switch">
+        <input type="checkbox" id="langToggle" onchange="toggleLang()">
+        <span class="lang-slider"></span>
+      </label>
+      <span>RW</span>
+    </div>
+    <div class="api-badge">
+      <div class="pulse" id="apiBadgeDot"></div>
+      <span id="apiBadgeText">Connecting…</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ NAV ═══ -->
+<nav class="nav" id="mainNav">
+  <div class="nav-tab active" onclick="showSection('overview',this)">
+    <span class="nav-icon">🏠</span><span class="t" data-en="Overview" data-rw="Ahabanza">Overview</span>
+  </div>
+  <div class="nav-tab" onclick="showSection('forecast',this)">
+    <span class="nav-icon">📊</span><span class="t" data-en="Demand Forecast" data-rw="Iteganyabikorwa">Demand Forecast</span>
+  </div>
+  <div class="nav-tab" onclick="showSection('price',this)">
+    <span class="nav-icon">💰</span><span class="t" data-en="Price Forecast" data-rw="Igiciro">Price Forecast</span>
+  </div>
+  <div class="nav-tab" onclick="showSection('compare',this)">
+    <span class="nav-icon">⚖️</span><span class="t" data-en="Model Compare" data-rw="Gereranya">Model Compare</span>
+  </div>
+  <div class="nav-tab" onclick="showSection('alerts',this)">
+    <span class="nav-icon">🔔</span><span class="t" data-en="Alerts" data-rw="Imenyesha">Alerts</span>
+  </div>
+  <div class="nav-tab" onclick="showSection('seasonal',this)">
+    <span class="nav-icon">🗓️</span><span class="t" data-en="Seasonal" data-rw="Ibihe">Seasonal</span>
+  </div>
+  <div class="nav-tab" onclick="showSection('history',this)">
+    <span class="nav-icon">📅</span><span class="t" data-en="Market History" data-rw="Amasoko">Market History</span>
+  </div>
+  <div class="nav-tab" onclick="showSection('sectors',this)">
+    <span class="nav-icon">🗺️</span><span class="t" data-en="Sectors" data-rw="Inzego">Sectors</span>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  OVERVIEW                                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+
+<div class="section active" id="sec-overview">
+  <!-- Welcome Banner -->
+  <div class="welcome" id="welcomeBanner">
+    <div class="welcome-title t" data-en="Agri Forecast Dashboard" data-rw="Ikibaho cy'Iteganyabikorwa">Agri Forecast Dashboard</div>
+    <div class="welcome-sub t"
+      data-en="Automated demand &amp; price forecasting for Musanze District's agribusiness sector. 7 crops · 5 sectors · 4 ML models · 3 years of market data."
+      data-rw="Guteganya isoko ry'ibihingwa bya Musanze. Ibihingwa 7 · Inzego 5 · Indorerezi 4 · Amakuru y'imyaka 3.">
+      Automated demand &amp; price forecasting for Musanze District's agribusiness sector. 7 crops · 5 sectors · 4 ML models · 3 years of market data.
+    </div>
+    <div class="season-pill" id="currentSeasonPill">⏳ Loading season…</div>
+  </div>
+
+  <!-- KPI Stats -->
+  <div class="grid-4" id="kpiGrid">
+    <div class="stat-card"><div class="stat-icon">🌱</div><div><div class="stat-val">7</div><div class="stat-lbl t" data-en="Crops Tracked" data-rw="Ibihingwa">Crops Tracked</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🤖</div><div><div class="stat-val">5</div><div class="stat-lbl t" data-en="ML Models" data-rw="Indorerezi">ML Models</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🗺️</div><div><div class="stat-val">5</div><div class="stat-lbl t" data-en="Musanze Sectors" data-rw="Inzego">Musanze Sectors</div></div></div>
+    <div class="stat-card"><div class="stat-icon">📦</div><div><div class="stat-val" id="kpiRecords">—</div><div class="stat-lbl t" data-en="DB Records" data-rw="Amakuru">DB Records</div></div></div>
+  </div>
+
+  <!-- Rwanda Season Strip -->
+  <div class="season-strip" id="seasonStrip">
+    <div class="season-card" id="seasonA">
+      <div class="season-letter">A</div>
+      <div class="season-name t" data-en="Main Season — Sep to Feb" data-rw="Igihingwa Gikomeye — Nzeri–Gashyantare">Main Season — Sep to Feb</div>
+      <div class="season-desc t" data-en="Primary planting &amp; harvest. Highest demand for staple crops." data-rw="Itera gikomeye. Isoko rinini ry'ibihingwa.">Primary planting &amp; harvest. Highest demand for staple crops.</div>
+    </div>
+    <div class="season-card" id="seasonB">
+      <div class="season-letter">B</div>
+      <div class="season-name t" data-en="Second Season — Mar to Jun" data-rw="Igihingwa cya Kabiri — Werurwe–Kamena">Second Season — Mar to Jun</div>
+      <div class="season-desc t" data-en="Second planting cycle. Rising demand mid-June." data-rw="Itera rya kabiri. Isoko rizamuka hagati ya Kamena.">Second planting cycle. Rising demand mid-June.</div>
+    </div>
+    <div class="season-card" id="seasonC">
+      <div class="season-letter">C</div>
+      <div class="season-name t" data-en="Lean Season — Jul to Aug" data-rw="Igihingwa cy'Icyuho — Nyakanga–Kanama">Lean Season — Jul to Aug</div>
+      <div class="season-desc t" data-en="Dry season, minimal supply. Prices peak 20–35%." data-rw="Igihe cy'icyuho. Ibiciro bizamuka 20–35%.">Dry season, minimal supply. Prices peak 20–35%.</div>
+    </div>
+  </div>
+
+  <!-- Crop Portfolio -->
+  <div class="card">
+    <div class="card-title t" data-en="Musanze Crop Portfolio" data-rw="Ibihingwa bya Musanze">Musanze Crop Portfolio</div>
+    <div class="card-sub t" data-en="Click a crop to jump to demand forecast" data-rw="Kanda ku gihingwa kugira amakuru">Click a crop to jump to demand forecast</div>
+    <div class="crop-grid" id="cropGrid"></div>
+  </div>
+
+  <!-- Market Insights + Overview Chart -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title t" data-en="Market Snapshot" data-rw="Amakuru y'Isoko">Market Snapshot</div>
+      <div class="card-sub t" data-en="4-week average vs long-term baseline" data-rw="Hagati y'ibyumweru 4 kuri baseline">4-week average vs long-term baseline</div>
+      <div class="spinner-wrap" id="insightSpinner" style="display:flex;"><div class="spinner"></div><span>Loading insights…</span></div>
+      <div id="insightTable" style="display:none;">
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr>
+              <th>Crop</th><th>Price (RWF/kg)</th><th>Demand (kg)</th><th>Status</th><th>Trend</th>
+            </tr></thead>
+            <tbody id="insightBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title t" data-en="Demand Overview — All Crops" data-rw="Isesengura ry'Isoko">Demand Overview — All Crops</div>
+      <div class="card-sub t" data-en="Average weekly demand by crop (last 4 weeks)" data-rw="Isoko hagati buri cyumweru">Average weekly demand by crop (last 4 weeks)</div>
+      <div class="chart-wrap h240"><canvas id="overviewChart" role="img" aria-label="Bar chart of average weekly demand per crop"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  DEMAND FORECAST                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-forecast">
+  <div class="card">
+    <div class="card-title t" data-en="Generate Demand Forecast" data-rw="Gena Iteganyabikorwa">Generate Demand Forecast</div>
+    <div class="card-sub t" data-en="Choose crop, ML model and forecast horizon" data-rw="Hitamo igihingwa, indorerezi n'igihe">Choose crop, ML model and forecast horizon</div>
+    <div class="ctrl-bar">
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Crop" data-rw="Igihingwa">Crop</span>
+        <select id="fcCrop"></select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Model" data-rw="Indorerezi">Model</span>
+        <select id="fcModel">
+          <option value="arima">ARIMA — Statistical</option>
+          <option value="randomforest">Random Forest — ML</option>
+          <option value="gradientboost">Gradient Boost — ML</option>
+          <option value="elasticnet">ElasticNet — Linear ML</option>
+          <option value="ensemble" selected>Ensemble — Best Accuracy</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Weeks Ahead" data-rw="Ibyumweru">Weeks Ahead</span>
+        <select id="fcWeeks">
+          <option value="4">4 weeks</option>
+          <option value="8">8 weeks</option>
+          <option value="12" selected>12 weeks</option>
+          <option value="16">16 weeks</option>
+          <option value="24">24 weeks</option>
+        </select>
+      </div>
+      <div class="ctrl-group" style="justify-content:flex-end;">
+        <span class="ctrl-label">&nbsp;</span>
+        <button class="btn btn-primary" id="fcBtn" onclick="doForecast()">
+          📊 <span class="t" data-en="Run Forecast" data-rw="Gena">Run Forecast</span>
+        </button>
+      </div>
+    </div>
+    <div class="err" id="fcErr"></div>
+  </div>
+
+  <div class="spinner-wrap" id="fcSpinner"><div class="spinner"></div><span>Running ML models…</span></div>
+  <div id="fcResult" style="display:none;">
+    <div class="grid-2">
+      <div class="card" style="grid-column:1/-1">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div class="card-title" id="fcChartTitle">Demand Forecast</div>
+            <div class="card-sub" id="fcChartSub"></div>
+          </div>
+          <button class="btn btn-secondary" onclick="exportCSV('fc')">⬇ Export CSV</button>
+        </div>
+        <div class="legend" id="fcLegend"></div>
+        <div class="chart-wrap h360"><canvas id="fcChart" role="img" aria-label="Demand forecast line chart"></canvas></div>
+      </div>
+    </div>
+    <!-- Metrics + Ensemble breakdown -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title t" data-en="Model Accuracy Metrics" data-rw="Imibare y'Indorerezi">Model Accuracy Metrics</div>
+        <div class="card-sub t" data-en="In-sample performance on 104 weeks of training data" data-rw="Imibare ku makuru ya kera">In-sample performance on training data</div>
+        <div class="metrics-strip" id="fcMetricsRow"></div>
+        <div class="chart-wrap h180"><canvas id="fcRadar" role="img" aria-label="Model accuracy radar chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title t" data-en="Ensemble Breakdown" data-rw="Imibare y'Ensemble">Ensemble Breakdown</div>
+        <div class="card-sub t" data-en="Individual model weights within the ensemble" data-rw="Uburemere bwa buri ndorerezi">Model weights within ensemble</div>
+        <div id="fcBreakdown" style="margin-top:8px;"></div>
+        <div class="advice" id="fcAdvice"><span class="advice-icon">💡</span><p id="fcAdviceTxt"></p></div>
+      </div>
+    </div>
+    <!-- Forecast table -->
+    <div class="card">
+      <div class="card-title t" data-en="Weekly Forecast Details" data-rw="Amakuru Yuzuye">Weekly Forecast Details</div>
+      <div class="card-sub t" data-en="Peak demand rows highlighted green; troughs in pink" data-rw="Ibyumweru bifite isoko rinini bigaragara ibara ryatsi">Peak demand rows highlighted green; troughs in pink</div>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr>
+            <th>Week</th><th>Date</th><th>Demand (kg)</th>
+            <th>Low CI</th><th>High CI</th><th>Bags</th><th>Season</th><th>Level</th>
+          </tr></thead>
+          <tbody id="fcTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  PRICE FORECAST                                             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-price">
+  <div class="card">
+    <div class="card-title t" data-en="Price Forecast" data-rw="Guteganya Igiciro">Price Forecast</div>
+    <div class="card-sub t" data-en="Predict weekly crop prices in Rwandan Francs (RWF/kg)" data-rw="Teganya igiciro cy'ibihingwa mu RWF">Predict weekly crop prices in Rwandan Francs (RWF/kg)</div>
+    <div class="ctrl-bar">
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Crop" data-rw="Igihingwa">Crop</span>
+        <select id="prCrop"></select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Model" data-rw="Indorerezi">Model</span>
+        <select id="prModel">
+          <option value="arima">ARIMA</option>
+          <option value="randomforest">Random Forest</option>
+          <option value="gradientboost">Gradient Boost</option>
+          <option value="elasticnet">ElasticNet</option>
+          <option value="ensemble" selected>Ensemble</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Weeks" data-rw="Ibyumweru">Weeks</span>
+        <select id="prWeeks">
+          <option value="4">4 weeks</option>
+          <option value="8">8 weeks</option>
+          <option value="12" selected>12 weeks</option>
+          <option value="16">16 weeks</option>
+          <option value="24">24 weeks</option>
+        </select>
+      </div>
+      <div class="ctrl-group" style="justify-content:flex-end;">
+        <span class="ctrl-label">&nbsp;</span>
+        <button class="btn btn-primary" id="prBtn" onclick="doPrice()">
+          💰 <span class="t" data-en="Get Price Forecast" data-rw="Bona Igiciro">Get Price Forecast</span>
+        </button>
+      </div>
+    </div>
+    <div class="err" id="prErr"></div>
+  </div>
+
+  <div class="spinner-wrap" id="prSpinner"><div class="spinner"></div><span>Forecasting prices…</span></div>
+  <div id="prResult" style="display:none;">
+    <!-- Summary KPIs -->
+    <div class="grid-4" id="prKPIs"></div>
+    <div class="grid-2">
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-title" id="prChartTitle">Price Forecast</div>
+        <div class="card-sub" id="prChartSub"></div>
+        <div class="chart-wrap h300"><canvas id="prChart" role="img" aria-label="Price forecast bar and line chart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="advice"><span class="advice-icon">💰</span><p id="prAdviceTxt"></p></div>
+    </div>
+    <div class="card">
+      <div class="card-title t" data-en="Weekly Price Table" data-rw="Amakuru y'Igiciro">Weekly Price Table</div>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr>
+            <th>Week</th><th>Date</th><th>Price (RWF/kg)</th>
+            <th>Low CI</th><th>High CI</th><th>Trend</th>
+          </tr></thead>
+          <tbody id="prTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODEL COMPARISON                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-compare">
+  <div class="card">
+    <div class="card-title t" data-en="Compare All 5 Models" data-rw="Gereranya Indorerezi 5">Compare All 5 Models</div>
+    <div class="card-sub t" data-en="Side-by-side forecast and accuracy metrics across ARIMA, RF, GB, ElasticNet and Ensemble" data-rw="Reba indorerezi 5 zegeranya">Side-by-side forecast and accuracy metrics</div>
+    <div class="ctrl-bar">
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Crop" data-rw="Igihingwa">Crop</span>
+        <select id="cmpCrop"></select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Weeks" data-rw="Ibyumweru">Weeks</span>
+        <select id="cmpWeeks">
+          <option value="8">8 weeks</option>
+          <option value="12" selected>12 weeks</option>
+          <option value="16">16 weeks</option>
+        </select>
+      </div>
+      <div class="ctrl-group" style="justify-content:flex-end;">
+        <span class="ctrl-label">&nbsp;</span>
+        <button class="btn btn-primary" onclick="doCompare()">
+          ⚖️ <span class="t" data-en="Run Comparison" data-rw="Gereranya">Run Comparison</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="spinner-wrap" id="cmpSpinner"><div class="spinner"></div><span>Running all models…</span></div>
+  <div id="cmpResult" style="display:none;">
+    <div class="card">
+      <div class="card-title t" data-en="Forecast Overlay — All Models" data-rw="Ishusho y'Iteganyabikorwa">Forecast Overlay — All Models</div>
+      <div class="legend" id="cmpLegend"></div>
+      <div class="chart-wrap h360"><canvas id="cmpChart" role="img" aria-label="Multi-model comparison line chart"></canvas></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title t" data-en="Accuracy Leaderboard" data-rw="Gereranya Imibare">Accuracy Leaderboard</div>
+        <div class="card-sub t" data-en="Ranked by lowest MAPE — lower is better" data-rw="Gutondekanya na MAPE gito">Ranked by lowest MAPE — lower is better</div>
+        <div id="cmpBars" style="margin-top:8px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title t" data-en="Full Metrics Table" data-rw="Amakuru Yuzuye y'Imibare">Full Metrics Table</div>
+        <div class="tbl-scroll">
+          <table class="compare-tbl">
+            <thead><tr><th>Model</th><th>MAE</th><th>RMSE</th><th>MAPE%</th><th>R²</th><th>Rank</th></tr></thead>
+            <tbody id="cmpTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  ALERTS                                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-alerts">
+  <div class="card">
+    <div class="card-title t" data-en="Market Alerts & Advisories" data-rw="Imenyesha y'Isoko">Market Alerts &amp; Advisories</div>
+    <div class="card-sub t" data-en="AI-generated alerts based on 8-week ensemble forecast" data-rw="Imenyesha y'AI ishingiye ku iteganyabikorwa rya ibyumweru 8">AI-generated alerts based on 8-week ensemble forecast</div>
+    <div class="ctrl-bar">
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Crop" data-rw="Igihingwa">Crop</span>
+        <select id="altCrop"></select>
+      </div>
+      <div class="ctrl-group" style="justify-content:flex-end;">
+        <span class="ctrl-label">&nbsp;</span>
+        <button class="btn btn-primary" onclick="doAlerts()">
+          🔔 <span class="t" data-en="Load Alerts" data-rw="Shyira Imenyesha">Load Alerts</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="spinner-wrap" id="altSpinner"><div class="spinner"></div><span>Generating alerts…</span></div>
+  <div id="altResult" style="display:none;"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  SEASONAL                                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-seasonal">
+  <div class="card">
+    <div class="card-title t" data-en="Seasonal Demand Analysis" data-rw="Isesengura ry'Ibihe">Seasonal Demand Analysis</div>
+    <div class="card-sub t" data-en="Monthly demand patterns across Rwandan seasons A, B and C" data-rw="Ibihe by'ubuhinzi bwa Rwanda: A, B na C">Monthly demand patterns across Rwandan seasons A, B and C</div>
+    <div class="ctrl-bar">
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Crop" data-rw="Igihingwa">Crop</span>
+        <select id="seaCrop"></select>
+      </div>
+      <div class="ctrl-group" style="justify-content:flex-end;">
+        <span class="ctrl-label">&nbsp;</span>
+        <button class="btn btn-primary" onclick="doSeasonal()">
+          🗓️ <span class="t" data-en="Analyse Seasons" data-rw="Suzuma Ibihe">Analyse Seasons</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="spinner-wrap" id="seaSpinner"><div class="spinner"></div><span>Loading seasonal data…</span></div>
+  <div id="seaResult" style="display:none;">
+    <div class="grid-2">
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-title" id="seaChartTitle">Monthly Demand Pattern</div>
+        <div class="card-sub" id="seaChartSub"></div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#1a6e1a;"></div><span class="t" data-en="Season A (Sep–Feb)" data-rw="Igihe A">Season A (Sep–Feb)</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#d4a017;"></div><span class="t" data-en="Season B (Mar–Jun)" data-rw="Igihe B">Season B (Mar–Jun)</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#c0392b;"></div><span class="t" data-en="Season C (Jul–Aug)" data-rw="Igihe C">Season C (Jul–Aug)</span></div>
+        </div>
+        <div class="chart-wrap h300"><canvas id="seaChart" role="img" aria-label="Monthly seasonal demand bar chart"></canvas></div>
+        <div class="advice" style="margin-top:16px;"><p id="seaAdviceTxt"></p></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title t" data-en="Monthly Statistics" data-rw="Imibare y'Ukwezi">Monthly Statistics</div>
+      <div class="tbl-scroll">
+        <table><thead><tr>
+          <th>Month</th><th>Avg Demand (kg)</th><th>Avg Price (RWF)</th><th>Std Dev</th><th>CV%</th><th>Season</th>
+        </tr></thead><tbody id="seaTableBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  HISTORY                                                    -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-history">
+  <div class="card">
+    <div class="card-title t" data-en="Historical Market Data" data-rw="Amakuru ya Kera y'Isoko">Historical Market Data</div>
+    <div class="card-sub t" data-en="3 years of weekly demand and price data (2021–2023)" data-rw="Amakuru y'imyaka 3 (2021–2023)">3 years of weekly demand and price data (2021–2023)</div>
+    <div class="ctrl-bar">
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Crop" data-rw="Igihingwa">Crop</span>
+        <select id="hisCrop"></select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Show Last N Weeks" data-rw="Ibyumweru biheruka">Show Last N Weeks</span>
+        <select id="hisWeeks">
+          <option value="12">12 weeks</option>
+          <option value="24" selected>24 weeks</option>
+          <option value="52">52 weeks (1 year)</option>
+          <option value="104">104 weeks (2 years)</option>
+          <option value="156">156 weeks (3 years)</option>
+        </select>
+      </div>
+      <div class="ctrl-group" style="justify-content:flex-end;">
+        <span class="ctrl-label">&nbsp;</span>
+        <button class="btn btn-primary" onclick="doHistory()">
+          📅 <span class="t" data-en="Load History" data-rw="Shyira Amakuru">Load History</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="spinner-wrap" id="hisSpinner"><div class="spinner"></div><span>Loading history…</span></div>
+  <div id="hisResult" style="display:none;">
+    <div class="grid-4" id="hisKPIs"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title t" data-en="Demand History (kg)" data-rw="Amakuru y'Isoko (kg)">Demand History (kg)</div>
+        <div class="chart-wrap h240"><canvas id="hisChartD" role="img" aria-label="Historical demand line chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title t" data-en="Price History (RWF/kg)" data-rw="Amakuru y'Igiciro (RWF/kg)">Price History (RWF/kg)</div>
+        <div class="chart-wrap h240"><canvas id="hisChartP" role="img" aria-label="Historical price line chart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title t" data-en="Demand vs Price Scatter" data-rw="Isesengura rya Isoko na Igiciro">Demand vs Price Scatter</div>
+      <div class="card-sub t" data-en="Supply-demand relationship — typically inverse" data-rw="Imiterere ya isoko na igiciro">Supply-demand relationship</div>
+      <div class="chart-wrap h240"><canvas id="hisScatter" role="img" aria-label="Scatter plot of demand vs price"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  SECTORS                                                    -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-sectors">
+  <div class="card">
+    <div class="card-title t" data-en="Musanze Sector Comparison" data-rw="Gereranya Inzego za Musanze">Musanze Sector Comparison</div>
+    <div class="card-sub t" data-en="5 sectors: Muhoza · Kinigi · Cyuve · Busogo · Shingiro" data-rw="Inzego 5 za Musanze">5 sectors: Muhoza · Kinigi · Cyuve · Busogo · Shingiro</div>
+    <div class="ctrl-bar">
+      <div class="ctrl-group">
+        <span class="ctrl-label t" data-en="Crop" data-rw="Igihingwa">Crop</span>
+        <select id="secCrop"></select>
+      </div>
+      <div class="ctrl-group" style="justify-content:flex-end;">
+        <span class="ctrl-label">&nbsp;</span>
+        <button class="btn btn-primary" onclick="doSectors()">
+          🗺️ <span class="t" data-en="Compare Sectors" data-rw="Gereranya">Compare Sectors</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="spinner-wrap" id="secSpinner"><div class="spinner"></div><span>Loading sector data…</span></div>
+  <div id="secResult" style="display:none;">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title t" data-en="Demand by Sector" data-rw="Isoko ku nzego">Demand by Sector</div>
+        <div class="sector-bars" id="secBars"></div>
+      </div>
+      <div class="card">
+        <div class="card-title t" data-en="Sector Radar — Demand vs Price" data-rw="Ishusho y'Inzego">Sector Radar — Demand vs Price</div>
+        <div class="chart-wrap h240"><canvas id="secRadar" role="img" aria-label="Radar chart comparing sectors"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title t" data-en="Sector Detail Table" data-rw="Amakuru y'Inzego">Sector Detail Table</div>
+      <div class="tbl-scroll">
+        <table><thead><tr>
+          <th>Sector</th><th>Avg Demand (kg)</th><th>Avg Price (RWF/kg)</th>
+          <th>Elevation (m)</th><th>Rainfall</th><th>Key Crops</th>
+        </tr></thead><tbody id="secTableBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<footer class="footer">
+  Agri Forecast System v6.0 &nbsp;·&nbsp; Automated Demand Forecasting &nbsp;·&nbsp;
+  Musanze District, Northern Province, Rwanda &nbsp;·&nbsp;
+  University of Kigali — BBIT 2026 &nbsp;·&nbsp;
+  BARAKA ISAAC (2305000514) &nbsp;·&nbsp; Supervisor: Dr MUSABE JEAN BOSCO
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  JAVASCRIPT                                                 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+const API = 'http://127.0.0.1:5000';
+let isRW = false;
+const charts = {};
+
+const CROPS = [
+  {id:1, en:'Irish Potato', rw:'Ibirayi',   icon:'🥔', color:'#8B6914'},
+  {id:2, en:'Maize',        rw:'Ibigori',   icon:'🌽', color:'#d4a017'},
+  {id:3, en:'Beans',        rw:'Ibishyimbo',icon:'🫘', color:'#6D4C41'},
+  {id:4, en:'Tomato',       rw:'Inyanya',   icon:'🍅', color:'#c0392b'},
+  {id:5, en:'Sorghum',      rw:'Isorgho',   icon:'🌾', color:'#29a329'},
+  {id:6, en:'Bananas',      rw:'Umuneke',   icon:'🍌', color:'#e67e22'},
+  {id:7, en:'Wheat',        rw:'Ingano',    icon:'🌾', color:'#d4a017'},
+];
+
+const MODEL_COLORS = {
+  arima:        '#1a6e1a',
+  randomforest: '#2471a3',
+  gradientboost:'#d4a017',
+  elasticnet:   '#8e44ad',
+  ensemble:     '#c0392b',
+};
+
+const SEASON_COLORS = {A:'#1a6e1a', B:'#d4a017', C:'#c0392b'};
+const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+
+// ── Helpers ───────────────────────────────────────────────────
+const cname = c => isRW ? c.rw : c.en;
+const $  = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString();
+
+function toggleLang() {
+  isRW = $('langToggle').checked;
+  document.querySelectorAll('.t').forEach(el => {
+    const v = isRW ? el.dataset.rw : el.dataset.en;
+    if (v) el.textContent = v;
+  });
+  populateCropSelects();
+}
+
+function populateCropSelects() {
+  ['fcCrop','prCrop','cmpCrop','seaCrop','hisCrop','secCrop','altCrop'].forEach(id => {
+    const sel = $(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = CROPS.map(c =>
+      `<option value="${c.id}">${c.icon} ${cname(c)}</option>`
+    ).join('');
+    if (cur) sel.value = cur;
+  });
+}
+
+function showSection(name, tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  $(`sec-${name}`).classList.add('active');
+  tab.classList.add('active');
+}
+
+function setSpinner(id, on) {
+  const el = $(id);
+  el.style.display = on ? 'flex' : 'none';
+}
+
+function showEl(id){ $(id).style.display = 'block'; }
+function hideEl(id){ $(id).style.display = 'none'; }
+
+function showErr(id, msg) {
+  const el = $(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function mkChart(id, cfg) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = $(id).getContext('2d');
+  charts[id] = new Chart(ctx, cfg);
+  return charts[id];
+}
+
+function demandBadge(val, max, min) {
+  const range = max - min || 1;
+  const pct = (val - min) / range;
+  if (pct >= 0.8) return '<span class="badge badge-high">High</span>';
+  if (pct >= 0.4) return '<span class="badge badge-med">Medium</span>';
+  return '<span class="badge badge-low">Low</span>';
+}
+
+function seasonBadge(s) {
+  const cls = {A:'badge-a', B:'badge-b', C:'badge-c'}[s] || '';
+  return `<span class="badge ${cls}">Season ${s}</span>`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+window.onload = async () => {
+  populateCropSelects();
+  buildCropGrid();
+  checkApi();
+  loadOverview();
+  markCurrentSeason();
+};
+
+async function checkApi() {
+  try {
+    const r = await fetch(`${API}/api/status`);
+    const d = await r.json();
+    $('apiBadgeDot').classList.remove('off');
+    $('apiBadgeText').textContent = `v${d.version} · ${d.db_records?.toLocaleString()} records`;
+    $('kpiRecords').textContent = d.db_records?.toLocaleString() || '—';
+  } catch {
+    $('apiBadgeDot').classList.add('off');
+    $('apiBadgeText').textContent = 'API offline — start app.py';
+  }
+}
+
+function markCurrentSeason() {
+  const m = new Date().getMonth() + 1;
+  const s = (m >= 9 || m <= 2) ? 'A' : (m <= 6 ? 'B' : 'C');
+  const labels = {
+    A: 'Current Season: A (Sep–Feb) — Main Harvest',
+    B: 'Current Season: B (Mar–Jun) — Second Planting',
+    C: 'Current Season: C (Jul–Aug) — Lean Season',
+  };
+  $('currentSeasonPill').textContent = `🗓 ${labels[s]}`;
+  $(`season${s}`).classList.add('current');
+}
+
+// ── Overview ──────────────────────────────────────────────────
+function buildCropGrid() {
+  $('cropGrid').innerHTML = CROPS.map(c => `
+    <div class="crop-tile" onclick="jumpToForecast(${c.id})">
+      <span class="crop-emoji">${c.icon}</span>
+      <div class="crop-name">${cname(c)}</div>
+      <div class="crop-price" id="tile-price-${c.id}">— RWF/kg</div>
+    </div>
+  `).join('');
+}
+
+async function loadOverview() {
+  try {
+    const r = await fetch(`${API}/market_insights`);
+    const d = await r.json();
+    hideEl('insightSpinner');
+    showEl('insightTable');
+
+    const badgeMap = {
+      High:   '<span class="badge badge-high">📈 High</span>',
+      Low:    '<span class="badge badge-low">📉 Low</span>',
+      Stable: '<span class="badge badge-stable">→ Stable</span>',
+    };
+    const trendMap = {
+      Rising:  '<span style="color:#1a6e1a;font-weight:600;">↑ Rising</span>',
+      Falling: '<span style="color:#c0392b;font-weight:600;">↓ Falling</span>',
+      Stable:  '<span style="color:#567056;">→ Stable</span>',
+    };
+
+    const insights = d.insights || [];
+    $('insightBody').innerHTML = insights.map(row => {
+      const c = CROPS.find(x => x.id === row.crop_id) || {};
+      const tpEl = $(`tile-price-${row.crop_id}`);
+      if (tpEl) tpEl.textContent = `${fmt(row.last_price_rwf)} RWF/kg`;
+      return `<tr>
+        <td><strong>${c.icon||''} ${row.crop_name}</strong></td>
+        <td style="font-family:'IBM Plex Mono',monospace;">${fmt(row.last_price_rwf)}</td>
+        <td style="font-family:'IBM Plex Mono',monospace;">${fmt(row.last_qty_kg)}</td>
+        <td>${badgeMap[row.status] || row.status}</td>
+        <td>${trendMap[row.price_status] || row.price_status}</td>
+      </tr>`;
+    }).join('');
+
+    // Overview chart
+    mkChart('overviewChart', {
+      type: 'bar',
+      data: {
+        labels: insights.map(r => {
+          const c = CROPS.find(x => x.id === r.crop_id);
+          return c ? `${c.icon} ${isRW ? c.rw : c.en}` : '';
+        }),
+        datasets: [{
+          label: 'Avg Demand (kg/wk)',
+          data: insights.map(r => r.last_qty_kg),
+          backgroundColor: insights.map(r => {
+            const c = CROPS.find(x => x.id === r.crop_id);
+            return c ? c.color + 'cc' : '#29a329cc';
+          }),
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { title: { display: true, text: 'Demand (kg)' }, beginAtZero: true },
+          x: { ticks: { maxRotation: 0 } }
+        }
+      }
+    });
+  } catch(e) {
+    $('insightSpinner').style.display = 'none';
+    $('insightBody').innerHTML = `<tr><td colspan="5" style="color:#c0392b;padding:16px;">Cannot connect — make sure app.py is running</td></tr>`;
+    showEl('insightTable');
+  }
+}
+
+function jumpToForecast(cropId) {
+  $('fcCrop').value = cropId;
+  showSection('forecast', document.querySelectorAll('.nav-tab')[1]);
+  doForecast();
+}
+
+// ── DEMAND FORECAST ───────────────────────────────────────────
+let lastFcData = null;
+
+async function doForecast() {
+  const crop  = $('fcCrop').value;
+  const model = $('fcModel').value;
+  const weeks = $('fcWeeks').value;
+  $('fcBtn').disabled = true;
+  hideEl('fcResult');
+  hideEl('fcErr');
+  setSpinner('fcSpinner', true);
+
+  try {
+    const r = await fetch(`${API}/forecast/${crop}?model=${model}&weeks=${weeks}`);
+    const d = await r.json();
+    if (d.status !== 'success') throw new Error(d.message || 'Forecast failed');
+    lastFcData = d;
+    renderForecast(d);
+    showEl('fcResult');
+  } catch(e) {
+    showErr('fcErr', e.message);
+  } finally {
+    setSpinner('fcSpinner', false);
+    $('fcBtn').disabled = false;
+  }
+}
+
+function renderForecast(d) {
+  const fc      = d.forecast;
+  const metrics = d.metrics;
+  const advice  = d.advice;
+  const breakDn = d.breakdown || {};
+
+  const maxD = Math.max(...fc.map(f => f.demand_kg));
+  const minD = Math.min(...fc.map(f => f.demand_kg));
+  const labels = fc.map(f => f.date);
+
+  $('fcChartTitle').textContent = `${d.crop_name} — ${d.model} Demand Forecast`;
+  $('fcChartSub').textContent = `${d.weeks}-week forecast · Musanze District, Rwanda`;
+
+  // Legend
+  $('fcLegend').innerHTML = `
+    <div class="legend-item"><div class="legend-dot" style="background:#1a6e1a;height:3px;border-radius:1px;width:18px;"></div><span>Forecast</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1a6e1a;opacity:.2;"></div><span>95% Confidence Interval</span></div>
+  `;
+
+  mkChart('fcChart', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Upper CI',
+          data: fc.map(f => f.upper_ci),
+          fill: '+1',
+          borderColor: 'transparent',
+          backgroundColor: 'rgba(26,110,26,.10)',
+          pointRadius: 0, tension: .4,
+        },
+        {
+          label: 'Lower CI',
+          data: fc.map(f => f.lower_ci),
+          fill: false,
+          borderColor: 'transparent',
+          backgroundColor: 'rgba(26,110,26,.10)',
+          pointRadius: 0, tension: .4,
+        },
+        {
+          label: 'Forecast (kg)',
+          data: fc.map(f => f.demand_kg),
+          borderColor: '#1a6e1a', backgroundColor: 'rgba(26,110,26,.06)',
+          borderWidth: 2.5, fill: false,
+          pointBackgroundColor: fc.map(f =>
+            f.demand_kg === maxD ? '#78c93a' : f.demand_kg === minD ? '#c0392b' : '#1a6e1a'
+          ),
+          pointRadius: 5, pointHoverRadius: 8, tension: .35,
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: c => {
+              if (c.dataset.label.includes('CI')) return '';
+              return ` ${c.parsed.y.toLocaleString()} kg`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          title: { display: true, text: 'Demand (kg)', font: { size: 11 } },
+          ticks: { callback: v => (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) }
+        },
+        x: { ticks: { maxRotation: 45, font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Metrics chips
+  const mColors = { MAE:'#2471a3', RMSE:'#8e44ad', MAPE:'#e67e22', R2:'#1a6e1a' };
+  $('fcMetricsRow').innerHTML = Object.entries({
+    MAE: fmt(metrics.MAE),
+    RMSE: fmt(metrics.RMSE),
+    'MAPE %': metrics.MAPE + '%',
+    'R²': metrics.R2,
+  }).map(([k, v]) => `
+    <div class="m-chip">
+      <div class="m-chip-val" style="color:${mColors[k.replace(' %','')] || '#1a6e1a'};">${v}</div>
+      <div class="m-chip-lbl">${k}</div>
+    </div>
+  `).join('');
+
+  // Radar
+  mkChart('fcRadar', {
+    type: 'radar',
+    data: {
+      labels: ['Accuracy', 'Low Error', 'Low MAPE', 'Fit (R²)'],
+      datasets: [{
+        label: d.model,
+        data: [
+          Math.min(100, (metrics.R2 || 0) * 100),
+          Math.max(0, 100 - metrics.MAPE * 2),
+          Math.max(0, 100 - metrics.MAPE),
+          (metrics.R2 || 0) * 100,
+        ],
+        borderColor: '#1a6e1a', backgroundColor: 'rgba(26,110,26,.12)',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: { min: 0, max: 100, ticks: { display: false } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Ensemble breakdown
+  if (Object.keys(breakDn).length > 0) {
+    $('fcBreakdown').innerHTML = Object.entries(breakDn).map(([name, info]) => `
+      <div class="model-bar-row">
+        <div class="model-name-lbl">${name}</div>
+        <div class="model-bar-bg">
+          <div class="model-bar-fill" style="width:${Math.round(info.weight*100)}%;background:${MODEL_COLORS[name]||'#1a6e1a'};"></div>
+        </div>
+        <div class="model-mape-lbl">${Math.round(info.weight*100)}%</div>
+      </div>
+    `).join('');
+  } else {
+    $('fcBreakdown').innerHTML = `<div style="font-size:.8rem;color:var(--muted);padding:8px 0;">Single model — no ensemble breakdown.</div>`;
+  }
+
+  // Advice
+  $('fcAdviceTxt').textContent = isRW ? (advice.tip_rw || '') : (advice.tip_en || '');
+
+  // Table
+  $('fcTableBody').innerHTML = fc.map(f => {
+    const isHigh = f.demand_kg === maxD;
+    const isLow  = f.demand_kg === minD;
+    return `<tr class="${isHigh ? 'demand-hi' : isLow ? 'demand-lo' : ''}">
+      <td><strong>W${f.week}</strong></td>
+      <td>${f.date}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-weight:${isHigh?'600':'400'};">${fmt(f.demand_kg)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;color:var(--muted);">${fmt(f.lower_ci)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;color:var(--muted);">${fmt(f.upper_ci)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${f.demand_bags}</td>
+      <td>${seasonBadge(f.season)}</td>
+      <td>${demandBadge(f.demand_kg, maxD, minD)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PRICE FORECAST ────────────────────────────────────────────
+async function doPrice() {
+  const crop  = $('prCrop').value;
+  const model = $('prModel').value;
+  const weeks = $('prWeeks').value;
+  $('prBtn').disabled = true;
+  hideEl('prResult');
+  hideEl('prErr');
+  setSpinner('prSpinner', true);
+
+  try {
+    const r = await fetch(`${API}/price_forecast/${crop}?model=${model}&weeks=${weeks}`);
+    const d = await r.json();
+    if (d.status !== 'success') throw new Error(d.message || 'Failed');
+    renderPrice(d);
+    showEl('prResult');
+  } catch(e) {
+    showErr('prErr', e.message);
+  } finally {
+    setSpinner('prSpinner', false);
+    $('prBtn').disabled = false;
+  }
+}
+
+function renderPrice(d) {
+  const fc     = d.forecast;
+  const advice = d.advice;
+
+  $('prChartTitle').textContent = `${d.crop_name} — ${d.model} Price Forecast`;
+  $('prChartSub').textContent = `${d.weeks}-week price outlook · Best sell: Week ${d.best_week}`;
+
+  // KPI strip
+  const changes = [
+    { label: 'Current Price', val: `${fmt(d.current_price)} RWF/kg`, accent: '#567056' },
+    { label: 'Peak Price',    val: `${fmt(d.max_price)} RWF/kg`,     accent: '#1a6e1a' },
+    { label: 'Low Price',     val: `${fmt(d.min_price)} RWF/kg`,     accent: '#c0392b' },
+    { label: 'Best Sell Week',val: `Week ${d.best_week}`,             accent: '#d4a017' },
+  ];
+  $('prKPIs').innerHTML = changes.map(c => `
+    <div class="stat-card">
+      <div class="stat-val" style="color:${c.accent};font-size:1.3rem;">${c.val}</div>
+      <div class="stat-lbl">${c.label}</div>
+    </div>
+  `).join('');
+
+  const prices = fc.map(f => f.price_rwf);
+  const maxP = Math.max(...prices);
+  const minP = Math.min(...prices);
+
+  mkChart('prChart', {
+    type: 'bar',
+    data: {
+      labels: fc.map(f => f.date),
+      datasets: [
+        {
+          label: 'Upper CI',
+          data: fc.map(f => f.upper_ci),
+          type: 'line',
+          borderColor: 'rgba(26,110,26,.25)',
+          backgroundColor: 'transparent',
+          borderDash: [4, 3],
+          pointRadius: 0, tension: .4,
+        },
+        {
+          label: 'Lower CI',
+          data: fc.map(f => f.lower_ci),
+          type: 'line',
+          borderColor: 'rgba(26,110,26,.25)',
+          backgroundColor: 'transparent',
+          borderDash: [4, 3],
+          pointRadius: 0, tension: .4,
+        },
+        {
+          label: 'Price (RWF/kg)',
+          data: prices,
+          backgroundColor: prices.map(v =>
+            v === maxP ? '#1a6e1acc' : v === minP ? '#c0392bcc' : '#d4a017cc'
+          ),
+          borderRadius: 5,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.parsed.y.toLocaleString()} RWF/kg` } }
+      },
+      scales: {
+        y: { title: { display: true, text: 'Price (RWF/kg)' }, beginAtZero: false },
+        x: { ticks: { maxRotation: 45, font: { size: 10 } } }
+      }
+    }
+  });
+
+  $('prAdviceTxt').textContent = isRW ? (advice.tip_rw || '') : (advice.tip_en || '');
+
+  $('prTableBody').innerHTML = fc.map(f => `
+    <tr>
+      <td><strong>W${f.week}</strong></td>
+      <td>${f.date}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-weight:${f.price_rwf===maxP?'600':'400'};color:${f.price_rwf===maxP?'#1a6e1a':f.price_rwf===minP?'#c0392b':'inherit'};">${fmt(f.price_rwf)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;color:var(--muted);">${fmt(f.lower_ci)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;color:var(--muted);">${fmt(f.upper_ci)}</td>
+      <td>${f.trend === 'up' ? '<span style="color:#1a6e1a;font-weight:600;">↑ Up</span>' : '<span style="color:#c0392b;font-weight:600;">↓ Down</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+// ── MODEL COMPARISON ──────────────────────────────────────────
+async function doCompare() {
+  const crop  = $('cmpCrop').value;
+  const weeks = $('cmpWeeks').value;
+  hideEl('cmpResult');
+  setSpinner('cmpSpinner', true);
+
+  try {
+    const r = await fetch(`${API}/compare/${crop}?weeks=${weeks}`);
+    const d = await r.json();
+    if (d.status !== 'success') throw new Error(d.message);
+    renderCompare(d);
+    showEl('cmpResult');
+  } catch(e) {
+    console.error(e);
+  } finally {
+    setSpinner('cmpSpinner', false);
+  }
+}
+
+function renderCompare(d) {
+  const models  = d.models;
+  const labels  = d.dates;
+
+  // Legend
+  $('cmpLegend').innerHTML = Object.keys(models).map(name => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${MODEL_COLORS[name]};"></div>
+      <span>${name.toUpperCase()}</span>
+    </div>
+  `).join('');
+
+  // Chart
+  mkChart('cmpChart', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: Object.entries(models).map(([name, data]) => ({
+        label: name.toUpperCase(),
+        data: data.forecasts,
+        borderColor: MODEL_COLORS[name] || '#1a6e1a',
+        backgroundColor: 'transparent',
+        borderWidth: name === 'ensemble' ? 3 : 1.8,
+        borderDash: name === 'ensemble' ? [] : [5, 3],
+        pointRadius: name === 'ensemble' ? 4 : 2,
+        tension: .35,
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        y: {
+          title: { display: true, text: 'Demand (kg)' },
+          ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v }
+        },
+        x: { ticks: { maxRotation: 45, font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Rank by MAPE
+  const ranked = Object.entries(models)
+    .filter(([, d]) => d.metrics && typeof d.metrics.MAPE === 'number')
+    .map(([name, data]) => ({ name, ...data.metrics }))
+    .sort((a, b) => a.MAPE - b.MAPE);
+
+  const maxMape = Math.max(...ranked.map(r => r.MAPE), 1);
+
+  // Bar chart for leaderboard
+  $('cmpBars').innerHTML = ranked.map((m, i) => `
+    <div class="model-bar-row">
+      <div class="model-name-lbl" style="color:${MODEL_COLORS[m.name]};">${MEDALS[i]} ${m.name}</div>
+      <div class="model-bar-bg">
+        <div class="model-bar-fill" style="width:${Math.round((1 - m.MAPE/maxMape)*100)}%;background:${MODEL_COLORS[m.name]};"></div>
+      </div>
+      <div class="model-mape-lbl">${m.MAPE}%</div>
+    </div>
+  `).join('');
+
+  // Table
+  $('cmpTableBody').innerHTML = ranked.map((m, i) => `
+    <tr class="${i === 0 ? 'best-row' : ''}">
+      <td style="color:${MODEL_COLORS[m.name]};font-weight:600;">${MEDALS[i]} ${m.name.toUpperCase()}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${fmt(m.MAE)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${fmt(m.RMSE)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${m.MAPE}%</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${m.R2}</td>
+      <td>${MEDALS[i]}</td>
+    </tr>
+  `).join('');
+}
+
+// ── ALERTS ────────────────────────────────────────────────────
+async function doAlerts() {
+  const crop = $('altCrop').value;
+  hideEl('altResult');
+  setSpinner('altSpinner', true);
+
+  try {
+    const r = await fetch(`${API}/alerts/${crop}`);
+    const d = await r.json();
+    if (d.status !== 'success') throw new Error(d.message);
+    renderAlerts(d);
+    showEl('altResult');
+  } catch(e) {
+    console.error(e);
+  } finally {
+    setSpinner('altSpinner', false);
+  }
+}
+
+function renderAlerts(d) {
+  const crop = CROPS.find(c => c.id === +d.crop_id) || {};
+  $('altResult').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <span style="font-size:2rem;">${crop.icon || '🌾'}</span>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--forest);">${d.crop_name} — Market Alerts</div>
+        <div style="font-size:.78rem;color:var(--muted);">${d.season_label} · ${d.alert_count} alert(s) generated</div>
+      </div>
+    </div>
+    ${(d.alerts || []).map(a => `
+      <div class="alert-card ${a.severity}">
+        <div class="alert-title">${a.title_en}</div>
+        <div class="alert-msg">${isRW ? a.message_rw : a.message_en}</div>
+        ${a.value > 0 ? `<div style="font-size:.75rem;color:var(--muted);margin-top:8px;font-family:'IBM Plex Mono',monospace;">Week ${a.week} · ${a.change_pct > 0 ? '+' : ''}${a.change_pct}% vs average · Value: ${fmt(a.value)}</div>` : ''}
+      </div>
+    `).join('')}
+  `;
+}
+
+// ── SEASONAL ──────────────────────────────────────────────────
+async function doSeasonal() {
+  const crop = $('seaCrop').value;
+  hideEl('seaResult');
+  setSpinner('seaSpinner', true);
+
+  try {
+    const r = await fetch(`${API}/seasonal/${crop}`);
+    const d = await r.json();
+    if (d.status !== 'success') throw new Error(d.message);
+    renderSeasonal(d);
+    showEl('seaResult');
+  } catch(e) {
+    console.error(e);
+  } finally {
+    setSpinner('seaSpinner', false);
+  }
+}
+
+function renderSeasonal(d) {
+  const months = d.seasonal;
+  const c = CROPS.find(x => x.id === +d.crop_id);
+
+  $('seaChartTitle').textContent = `${d.crop_name} — Monthly Demand Pattern`;
+  $('seaChartSub').textContent = `Peak: ${d.peak_month} · Low: ${d.low_month}`;
+
+  const bgColors = months.map(m => {
+    const s = m.season;
+    return s === 'A' ? 'rgba(26,110,26,.80)' : s === 'B' ? 'rgba(212,160,23,.80)' : 'rgba(192,57,43,.75)';
+  });
+
+  mkChart('seaChart', {
+    type: 'bar',
+    data: {
+      labels: months.map(m => m.month),
+      datasets: [
+        {
+          label: 'Avg Demand (kg)',
+          data: months.map(m => m.avg_demand),
+          backgroundColor: bgColors,
+          borderRadius: 6, borderSkipped: false,
+        },
+        {
+          label: 'Std Dev',
+          type: 'line',
+          data: months.map(m => m.std_demand),
+          borderColor: 'rgba(26,110,26,.4)',
+          backgroundColor: 'transparent',
+          borderDash: [5, 3], pointRadius: 4, tension: .4,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { title: { display: true, text: 'Demand (kg)' } },
+        x: { ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+
+  $('seaAdviceTxt').textContent =
+    `Season A (Sep–Feb) is the primary planting and harvest period — peak demand for ${d.crop_name}. ` +
+    `Season B (Mar–Jun) brings the second cycle with rising demand from mid-June. ` +
+    `Season C (Jul–Aug) is the lean dry season; supply drops and prices peak. ` +
+    `Highest demand: ${d.peak_month} · Lowest demand: ${d.low_month}.`;
+
+  $('seaTableBody').innerHTML = months.map(m => `
+    <tr>
+      <td><strong>${m.month}</strong></td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${fmt(m.avg_demand)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${fmt(m.avg_price)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${fmt(m.std_demand)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${m.cv}%</td>
+      <td>${seasonBadge(m.season)}</td>
+    </tr>
+  `).join('');
+}
+
+// ── HISTORY ───────────────────────────────────────────────────
+async function doHistory() {
+  const crop  = $('hisCrop').value;
+  const weeks = $('hisWeeks').value;
+  hideEl('hisResult');
+  setSpinner('hisSpinner', true);
+
+  try {
+    const r = await fetch(`${API}/history/${crop}?weeks=${weeks}`);
+    const d = await r.json();
+    if (d.status !== 'success') throw new Error(d.message);
+    renderHistory(d);
+    showEl('hisResult');
+  } catch(e) {
+    console.error(e);
+  } finally {
+    setSpinner('hisSpinner', false);
+  }
+}
+
+function renderHistory(d) {
+  const h = d.history;
+  const labels  = h.map(x => x.date);
+  const demands = h.map(x => x.demand_kg);
+  const prices  = h.map(x => x.price_rwf);
+
+  // KPIs
+  const wow_d = d.wow_demand >= 0 ? `+${d.wow_demand}%` : `${d.wow_demand}%`;
+  const wow_p = d.wow_price  >= 0 ? `+${d.wow_price}%`  : `${d.wow_price}%`;
+  $('hisKPIs').innerHTML = [
+    { label:'Avg Demand', val: fmt(d.avg_demand)+' kg', chg: wow_d, chgUp: d.wow_demand >= 0 },
+    { label:'Avg Price',  val: fmt(d.avg_price)+' RWF', chg: wow_p,  chgUp: d.wow_price >= 0 },
+    { label:'Peak Demand',val: fmt(d.max_demand)+' kg', chg:'', chgUp: true },
+    { label:'Weeks Data', val: d.total_weeks+' wks',    chg:'', chgUp: true },
+  ].map(s => `
+    <div class="stat-card">
+      <div><div class="stat-val">${s.val}</div><div class="stat-lbl">${s.label}</div>
+      ${s.chg ? `<div class="stat-change ${s.chgUp ? 'up':'down'}">${s.chg} WoW</div>` : ''}</div>
+    </div>
+  `).join('');
+
+  const tickOpts = { maxTicksLimit: 10, maxRotation: 45, font: { size: 10 } };
+
+  mkChart('hisChartD', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Demand (kg)', data: demands,
+        borderColor: '#1a6e1a', backgroundColor: 'rgba(26,110,26,.07)',
+        fill: true, tension: .3, pointRadius: 2, borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { title: { display: true, text: 'Demand (kg)' }, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v } },
+        x: { ticks: tickOpts }
+      }
+    }
+  });
+
+  mkChart('hisChartP', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Price (RWF/kg)', data: prices,
+        borderColor: '#d4a017', backgroundColor: 'rgba(212,160,23,.07)',
+        fill: true, tension: .3, pointRadius: 2, borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { title: { display: true, text: 'Price (RWF/kg)' } },
+        x: { ticks: tickOpts }
+      }
+    }
+  });
+
+  // Scatter: demand vs price
+  mkChart('hisScatter', {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Demand vs Price',
+        data: h.map(x => ({ x: x.demand_kg, y: x.price_rwf })),
+        backgroundColor: 'rgba(26,110,26,.45)',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'Demand (kg)' }, ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v } },
+        y: { title: { display: true, text: 'Price (RWF/kg)' } }
+      }
+    }
+  });
+}
+
+// ── SECTORS ───────────────────────────────────────────────────
+async function doSectors() {
+  const crop = $('secCrop').value;
+  hideEl('secResult');
+  setSpinner('secSpinner', true);
+
+  try {
+    const r = await fetch(`${API}/sector_comparison/${crop}`);
+    const d = await r.json();
+    if (d.status !== 'success') throw new Error(d.message);
+    renderSectors(d);
+    showEl('secResult');
+  } catch(e) {
+    console.error(e);
+  } finally {
+    setSpinner('secSpinner', false);
+  }
+}
+
+function renderSectors(d) {
+  const secs = d.sectors;
+  const maxD = Math.max(...secs.map(s => s.avg_demand_kg));
+
+  $('secBars').innerHTML = secs.map(s => `
+    <div class="sector-row">
+      <div class="sector-label">${s.sector}</div>
+      <div class="sector-bar-bg">
+        <div class="sector-bar-fill" style="width:${Math.round(s.avg_demand_kg/maxD*100)}%;"></div>
+      </div>
+      <div class="sector-val">${fmt(s.avg_demand_kg)} kg</div>
+    </div>
+  `).join('');
+
+  mkChart('secRadar', {
+    type: 'radar',
+    data: {
+      labels: secs.map(s => s.sector),
+      datasets: [
+        {
+          label: 'Avg Demand',
+          data: secs.map(s => s.avg_demand_kg),
+          borderColor: '#1a6e1a', backgroundColor: 'rgba(26,110,26,.12)',
+          pointRadius: 4,
+        },
+        {
+          label: 'Avg Price',
+          data: secs.map(s => s.avg_price_rwf),
+          borderColor: '#d4a017', backgroundColor: 'rgba(212,160,23,.10)',
+          pointRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: { r: { ticks: { display: false } } }
+    }
+  });
+
+  $('secTableBody').innerHTML = secs.map(s => `
+    <tr>
+      <td><strong>${s.sector}</strong></td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${fmt(s.avg_demand_kg)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${fmt(s.avg_price_rwf)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;">${s.elevation}</td>
+      <td>${s.rainfall}</td>
+      <td style="font-size:.8rem;color:var(--muted);">${s.specialty}</td>
+    </tr>
+  `).join('');
+}
+
+// ── CSV EXPORT ────────────────────────────────────────────────
+function exportCSV(tab) {
+  if (tab === 'fc' && lastFcData) {
+    const rows = [['Week','Date','Demand_kg','LowerCI','UpperCI','Bags','Season']];
+    lastFcData.forecast.forEach(f => rows.push([f.week, f.date, f.demand_kg, f.lower_ci, f.upper_ci, f.demand_bags, f.season]));
+    downloadCSV(rows, `demand_forecast_${lastFcData.crop_name.replace(/\s/g,'_')}.csv`);
+  }
+}
+
+function downloadCSV(rows, filename) {
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = filename;
+  a.click();
+}
+</script>
+</body>
+</html>

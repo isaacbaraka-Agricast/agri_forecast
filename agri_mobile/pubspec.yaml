@@ -1,0 +1,47 @@
+name: agri_mobile
+description: Agri Forecast System - Musanze District, Rwanda
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  flutter_native_splash: ^2.3.2
+  cupertino_icons: ^1.0.2
+  firebase_core: ^3.0.0
+  firebase_messaging: ^15.0.0
+  fl_chart: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  flutter_launcher_icons: ^0.13.1
+  pdf: ^3.10.8
+  printing: ^5.12.0
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1A5C1A"
+  adaptive_icon_foreground: "assets/icon.png"
+
+flutter_native_splash:
+  color: "#1A5C1A"
+  color_dark: "#1A5C1A"
+  image: assets/splash.png
+  android: true
+  ios: false
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon.png
+    - assets/splash.png
+   
