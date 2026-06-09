@@ -33,7 +33,26 @@ CORS(app)
 # =============================================================
 # DATABASE
 # =============================================================
-DB_CONFIG = dict(host="localhost", user="root", password="", database="agri_forecast_db")
+DATABASE
+# =============================================================
+# =============================================================
+# DATABASE
+# =============================================================
+import os
+from urllib.parse import urlparse
+
+_mysql_url = os.environ.get('MYSQL_URL', '')
+if _mysql_url:
+    _parsed = urlparse(_mysql_url)
+    DB_CONFIG = dict(
+        host=_parsed.hostname,
+        port=_parsed.port or 3306,
+        user=_parsed.username,
+        password=_parsed.password,
+        database=_parsed.path.lstrip('/')
+    )
+else:
+    DB_CONFIG = dict(host="localhost", user="root", password="", database="agri_forecast_db")
 
 def get_db():
     return mysql.connector.connect(**DB_CONFIG)
