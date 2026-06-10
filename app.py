@@ -715,7 +715,7 @@ def login():
         hashed = hashlib.sha256(pwd.encode()).hexdigest()
         db     = get_db()
         cur    = db.cursor(dictionary=True)
-        cur.execute("SELECT user_id, full_name, phone, role FROM users WHERE phone=%s AND password=%s",
+        cur.execute("SELECT user_id, full_name, phone, role, sector, farm_size_acres FROM users WHERE phone=%s AND password=%s",
                     (phone, hashed))
         user   = cur.fetchone()
         cur.close(); db.close()
