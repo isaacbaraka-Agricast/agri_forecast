@@ -101,7 +101,7 @@ def _generate_synthetic_data(crop_id):
     # Realistic Rwandan market base quantities (kg/week, Musanze market)
     base_qty   = [4200, 3100, 2800, 1800, 2200, 1500, 3500][(crop_id - 1) % 7]
     # Realistic Rwandan market prices (RWF/kg, Musanze 2024-2025)
-    base_price = [250,  220,  700,  350,  280,  400,  180][(crop_id - 1) % 7]
+    base_price = [650,  500,  800,  900,  350,  420,  280][(crop_id - 1) % 7]
 
     qty   = (base_qty   * season + np.random.normal(0, base_qty * 0.05, weeks)).clip(500)
     price = (base_price * season + np.random.normal(0, base_price * 0.04, weeks) +
