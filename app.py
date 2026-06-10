@@ -1038,8 +1038,8 @@ def init_db():
 @app.route('/admin/seed_market', methods=['POST'])
 def seed_market():
     try:
-        data    = request.get_json()
-        records = data.get('records', [])
+        data = request.get_json()
+        records = data if isinstance(data, list) else data.get('records', [])
         if not records:
             return jsonify({"status": "error", "message": "No records provided"}), 400
 
