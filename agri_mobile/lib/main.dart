@@ -5,7 +5,6 @@
 // Supervisor: Dr MUSABE JEAN BOSCO
 // University of Kigali — School of Computing & IT — BBIT 2026
 // =============================================================
-
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -16,7 +15,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
+// =============================================================
+// COLORS (must be AFTER imports)
+// =============================================================
 
+const Color kLeaf    = Color(0xFF2E7D32);
+const Color kSprout  = Color(0xFF66BB6A);
+const Color kRed     = Color(0xFFE53935);
+const Color kAmber   = Color(0xFFFFA000);
+const Color kLime    = Color(0xFFCDDC39);
+const Color kSkyPale = Color(0xFFE3F2FD);
+const Color kStraw   = Color(0xFFFFB74D);
+const Color kBlue    = Color(0xFF1565C0);
+const Color kText    = Color(0xFF1B1B1B);
+const Color kBg      = Color(0xFFFFFFFF);
+const Color kCard    = Color(0xFFFFFFFF);
+const Color kForest  = Color(0xFF0F1F0F);
+const Color kMuted   = Color(0xFF567056);
+const Color kBorder  = Color(0xFFD0E0D0);
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
@@ -36,25 +52,9 @@ void main() {
 const String _apiBase =
     String.fromEnvironment(
       'API_BASE',
-      defaultValue: 'http://10.0.2.21:5000',
+      defaultValue: 'https://agriforecast-production.up.railway.app',
     );
-
-const Color kForest    = Color(0xFF0D3B0D);
-const Color kLeaf      = Color(0xFF1A6E1A);
-const Color kSprout    = Color(0xFF29A329);
-const Color kLime      = Color(0xFF78C93A);
-const Color kClay      = Color(0xFFB5652A);
-const Color kStraw     = Color(0xFFD4A017);
-const Color kSkyPale   = Color(0xFFE8F5E9);
-const Color kRed       = Color(0xFFC0392B);
-const Color kAmber     = Color(0xFFE67E22);
-const Color kBlue      = Color(0xFF2471A3);
-const Color kBg        = Color(0xFFF7F9F4);
-const Color kCard      = Color(0xFFFFFFFF);
-const Color kText      = Color(0xFF0F1F0F);
-const Color kMuted     = Color(0xFF567056);
-const Color kBorder    = Color(0xFFD0E0D0);
-
+  
 // =============================================================
 //  TRANSLATION ENGINE
 // =============================================================
@@ -735,7 +735,7 @@ class _LoginState extends State<LoginPage>
           Navigator.pushReplacement(
             context,
             PageRouteBuilder(
-              pageBuilder: (_, a, __) =>  MainShell(),
+              pageBuilder: (_, a, __) =>  const MainShell(),
               transitionsBuilder: (_, a, __, child) =>
                   FadeTransition(opacity: a, child: child),
               transitionDuration: const Duration(milliseconds: 400),
@@ -1318,7 +1318,9 @@ class _OverviewPageState extends State<OverviewPage> {
         children: [
           // Welcome banner
           _WelcomeBanner(season: _currentSeason()),
-          const SizedBox(height: 16),
+const SizedBox(height: 16),
+_WeatherCard(),
+const SizedBox(height: 16),
 
           // KPI strip
           _loading
@@ -1698,7 +1700,205 @@ class _MarketSnapshotList extends StatelessWidget {
     );
   }
 }
+// =============================================================
+//  WEATHER CARD
+// =============================================================
+class _WeatherCard extends StatefulWidget {
+  @override
+  State<_WeatherCard> createState() => _WeatherCardState();
+}
 
+class _WeatherCardState extends State<_WeatherCard> {
+  Map<String, dynamic>? _weather;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final d = await ApiService.get('/weather', requireAuth: false);
+      if (mounted) setState(() { _weather = d; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  String _rainLabel(num rain) {
+    if (rain == 0) return T.rw ? 'Nta mvura' : 'No rain';
+    if (rain < 5)  return T.rw ? 'Mvura nke' : 'Light rain';
+    if (rain < 20) return T.rw ? 'Mvura' : 'Moderate rain';
+    return T.rw ? 'Mvura nyinshi' : 'Heavy rain';
+  }
+
+  String _rainEmoji(num rain) {
+    if (rain == 0) return '☀️';
+    if (rain < 5)  return '🌦️';
+    if (rain < 20) return '🌧️';
+    return '⛈️';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: kSkyPale,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kBorder),
+        ),
+        child: const Center(
+          child: SizedBox(width: 20, height: 20,
+            child: CircularProgressIndicator(color: kSprout, strokeWidth: 2)),
+        ),
+      );
+    }
+    if (_weather == null) return const SizedBox();
+
+    final cur  = _weather!['current'] as Map<String, dynamic>;
+    final fc   = (_weather!['forecast'] as List).take(4).toList();
+    final temp = (cur['temperature'] as num).toStringAsFixed(1);
+    final hum  = cur['humidity'] as num;
+    final rain = (cur['rain'] as num?) ?? 0;
+    final wind = (cur['windspeed'] as num).toStringAsFixed(1);
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1565C0), Color(0xFF1976D2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: kBlue.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(children: [
+            const Icon(Icons.wb_sunny_outlined, color: Colors.white70, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              T.rw ? '🌦 Ikirere — Musanze' : '🌦 Weather — Musanze',
+              style: const TextStyle(
+                color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ]),
+          const SizedBox(height: 12),
+
+          // Current temp + condition
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _rainEmoji(rain),
+                style: const TextStyle(fontSize: 44),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$temp°C',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
+                  Text(
+                    _rainLabel(rain),
+                    style: const TextStyle(
+                      color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              // Extra stats
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _WeatherStat('💧', '$hum%',     T.rw ? 'Ubunyufu' : 'Humidity'),
+                  const SizedBox(height: 6),
+                  _WeatherStat('💨', '${wind}km/h', T.rw ? 'Umuyaga' : 'Wind'),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // 4-day forecast strip
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: fc.asMap().entries.map((e) {
+                final day  = e.value as Map<String, dynamic>;
+                final date = (day['date'] as String).substring(5); // MM-DD
+                final max  = (day['max_temp'] as num).toStringAsFixed(0);
+                final min  = (day['min_temp'] as num).toStringAsFixed(0);
+                final r    = (day['rain'] as num?) ?? 0;
+                return Column(children: [
+                  Text(e.key == 0 ? (T.rw ? 'Uyu' : 'Today') : date,
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 9)),
+                  const SizedBox(height: 4),
+                  Text(_rainEmoji(r),
+                      style: const TextStyle(fontSize: 18)),
+                  const SizedBox(height: 2),
+                  Text('$max°',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700)),
+                  Text('$min°',
+                      style: const TextStyle(
+                          color: Colors.white60, fontSize: 10)),
+                ]);
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeatherStat extends StatelessWidget {
+  final String emoji, value, label;
+  const _WeatherStat(this.emoji, this.value, this.label);
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(emoji, style: const TextStyle(fontSize: 12)),
+      const SizedBox(width: 4),
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(value, style: const TextStyle(
+            color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+        Text(label, style: const TextStyle(
+            color: Colors.white60, fontSize: 9)),
+      ]),
+    ],
+  );
+}
 // =============================================================
 //  FORECAST PAGE
 // =============================================================
@@ -3678,14 +3878,14 @@ class _ReportsPageState extends State<ReportsPage> {
                         fontSize: 22,
                         fontWeight: pw.FontWeight.bold)),
                 pw.Text('Musanze District · Northern Province · Rwanda',
-                    style: pw.TextStyle(color: PdfColors.green200, fontSize: 11)),
+                    style: const pw.TextStyle(color: PdfColors.green200, fontSize: 11)),
                 pw.SizedBox(height: 4),
                 pw.Text('Crop: $cropName  |  Model: $model  |  Weeks: ${fc.length}',
-                    style: pw.TextStyle(color: PdfColors.green100, fontSize: 11)),
+                    style: const pw.TextStyle(color: PdfColors.green100, fontSize: 11)),
                 pw.Text(
                     'Generated: ${DateTime.now().toString().substring(0, 16)}'
                     '  |  User: ${UserSession.name}',
-                    style: pw.TextStyle(color: PdfColors.green200, fontSize: 10)),
+                    style: const pw.TextStyle(color: PdfColors.green200, fontSize: 10)),
               ],
             ),
           ),
@@ -4174,7 +4374,7 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 _SectionHeader(T.about, small: true),
                 const SizedBox(height: 14),
-                _InfoRow(Icons.agriculture,      'Project',    'Agri Forecast — Musanze'),
+                const _InfoRow(Icons.agriculture,      'Project',    'Agri Forecast — Musanze'),
                 _InfoRow(Icons.school,           T.rw ? 'Umwanditsi' : 'Author',     'BARAKA ISAAC (2305000514)'),
                 _InfoRow(Icons.supervisor_account, T.rw ? 'Umujyanama' : 'Supervisor', 'Dr MUSABE JEAN BOSCO'),
                 _InfoRow(Icons.account_balance,  T.rw ? 'Kaminuza' : 'University',   'University of Kigali'),
