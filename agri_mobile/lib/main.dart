@@ -49,11 +49,7 @@ void main() {
 // =============================================================
 //  CONFIG & CONSTANTS
 // =============================================================
-const String _apiBase =
-    String.fromEnvironment(
-      'API_BASE',
-      defaultValue: 'https://agriforecast-production.up.railway.app',
-    );
+const String _apiBase = 'https://agriforecast-production.up.railway.app';
   
 // =============================================================
 //  TRANSLATION ENGINE
