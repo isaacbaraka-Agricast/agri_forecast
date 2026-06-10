@@ -1031,6 +1031,39 @@ def init_db():
 # =============================================================
 # ENTRY POINT
 # =============================================================
+
+# =============================================================
+# ADMIN - Seed real market data
+# =============================================================
+@app.route('/admin/seed_market', methods=['POST'])
+def seed_market():
+    try:
+        data    = request.get_json()
+        records = data.get('records', [])
+        if not records:
+            return jsonify({"status": "error", "message": "No records provided"}), 400
+
+        db  = get_db()
+        cur = db.cursor()
+
+        # Clear old data
+        cur.execute("DELETE FROM market_prices")
+
+        inserted = 0
+        for r in records:
+            cur.execute("""
+                INSERT INTO market_prices (crop_id, district_id, recorded_date, quantity_kg, price_per_kg)
+                VALUES (%s, 1, %s, %s, %s)
+            """, (r["crop_id"], r["date"], r["quantity_kg"], r["price_per_kg"]))
+            inserted += 1
+
+        db.commit()
+        cur.close()
+        db.close()
+        return jsonify({"status": "success", "inserted": inserted})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 if __name__ == '__main__':
     def open_browser():
         webbrowser.open('http://127.0.0.1:5000')
