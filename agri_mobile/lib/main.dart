@@ -1976,7 +1976,7 @@ class _ForecastPageState extends State<ForecastPage> {
     setState(() { _loading = true; _error = null; _result = null; });
     try {
       final d = await ApiService.get(
-          '/forecast/$_cropId?model=$_model&weeks=$_weeks');
+          '/forecast/$_cropId?model=$_model&weeks=$_weeks&farm_size=${UserSession.farmSizeAcres}');
       if (d['status'] != 'success') throw Exception(d['message']);
       setState(() { _result = d; _loading = false; });
       widget.onResult?.call(d);
