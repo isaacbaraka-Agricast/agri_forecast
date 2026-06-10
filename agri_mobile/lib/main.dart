@@ -1909,34 +1909,52 @@ Map<String, dynamic> _calcPlantingAdvice(Map<String, dynamic> forecastData) {
   final avgD     = demands.reduce((a, b) => a + b) / demands.length;
   final peakWeek = demands.indexOf(maxD) + 1;
   final peakDate = fc[peakWeek - 1]['date'] as String? ?? '';
-  final targetKg   = (maxD * 1.20).roundToDouble();
-  final plantingKg = (targetKg * 1.25).roundToDouble();
-  final bags50     = (targetKg / 50).ceil();
-  final bags100    = (targetKg / 100).ceil();
-  final weeksUntilPeak = peakWeek;
-  String plantingWindow;
-  if (weeksUntilPeak <= 4) {
-    plantingWindow = T.plantingUrgent;
-  } else if (weeksUntilPeak <= 10) {
-    plantingWindow = T.plantNow;
-  } else if (weeksUntilPeak <= 16) {
-    plantingWindow = T.plantSoon;
-  } else {
-    plantingWindow = T.plantLater;
-  }
+
+  // Use backend farmer_advice if available, else fall back to simple calc
+  final fa = forecastData['farmer_advice'] as Map<String, dynamic>?;
+  final mk = forecastData['market']        as Map<String, dynamic>?;
+
+  final plantingKg     = fa != null ? ((fa['plant_target_kg']  as num?)?.toInt()  ?? (maxD * 1.44).round()) : (maxD * 1.44).round();
+  final targetKg       = fa != null ? ((fa['farmer_target_kg'] as num?)?.toInt()  ?? (maxD * 1.20).round()) : (maxD * 1.20).round();
+  final seedBags       = fa != null ? ((fa['seed_bags_needed'] as num?)?.toInt()  ?? 1)                     : 1;
+  final bagKg          = fa != null ? ((fa['bag_kg']           as num?)?.toInt()  ?? 50)                    : 50;
+  final requiredAcres  = fa != null ? ((fa['required_acres']   as num?)?.toDouble() ?? 0.0)                 : 0.0;
+  final weeksToPlant   = fa != null ? ((fa['weeks_until_plant'] as num?)?.toInt() ?? peakWeek)              : peakWeek;
+  final plantByDate    = fa != null ? (fa['plant_by_date']     as String? ?? '')                            : '';
+  final urgency        = fa != null ? (fa['urgency']           as String? ?? 'flexible')                    : 'flexible';
+  final urgencyMsg     = fa != null ? (T.rw ? fa['urgency_rw'] : fa['urgency_en']) as String? ?? ''        : '';
+  final marketShare    = fa != null ? ((fa['market_share_pct'] as num?)?.toDouble() ?? 0.0)                : 0.0;
+  final farmSize       = fa != null ? ((fa['farm_size_acres']  as num?)?.toDouble() ?? 1.5)                : 1.5;
+
+  final marketSignal   = mk != null ? (mk['signal']    as String? ?? 'balanced')                           : 'balanced';
+  final signalMsg      = mk != null ? (T.rw ? mk['signal_rw'] : mk['signal_en']) as String? ?? ''         : '';
+  final trendMsg       = mk != null ? (T.rw ? mk['trend_rw']  : mk['trend_en'])  as String? ?? ''         : '';
+  final peakDemandKg   = mk != null ? ((mk['peak_demand_kg']  as num?)?.toInt()  ?? maxD.round())         : maxD.round();
+
   return {
     'crop_name':       cropName,
     'peak_week':       peakWeek,
     'peak_date':       peakDate,
-    'peak_demand_kg':  maxD.round(),
+    'peak_demand_kg':  peakDemandKg,
     'avg_demand_kg':   avgD.round(),
     'min_demand_kg':   minD.round(),
-    'target_kg':       targetKg.round(),
-    'planting_kg':     plantingKg.round(),
-    'bags_50kg':       bags50,
-    'bags_100kg':      bags100,
-    'planting_window': plantingWindow,
-    'weeks_to_peak':   weeksUntilPeak,
+    'target_kg':       targetKg,
+    'planting_kg':     plantingKg,
+    'seed_bags':       seedBags,
+    'bag_kg':          bagKg,
+    'required_acres':  requiredAcres,
+    'farm_size':       farmSize,
+    'market_share':    marketShare,
+    'weeks_to_plant':  weeksToPlant,
+    'plant_by_date':   plantByDate,
+    'urgency':         urgency,
+    'urgency_msg':     urgencyMsg,
+    'market_signal':   marketSignal,
+    'signal_msg':      signalMsg,
+    'trend_msg':       trendMsg,
+    'bags_50kg':       (targetKg / 50).ceil(),
+    'weeks_to_peak':   peakWeek,
+    'planting_window': urgencyMsg,
   };
 }
 class ForecastPage extends StatefulWidget {
@@ -2381,15 +2399,26 @@ class _PlantingAdviceSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cropName   = advice['crop_name']     as String;
-    final peakWeek   = advice['peak_week']      as int;
-    final peakDate   = advice['peak_date']      as String;
-    final peakKg     = advice['peak_demand_kg'] as int;
-    final targetKg   = advice['target_kg']      as int;
-    final plantingKg = advice['planting_kg']    as int;
-    final bags50     = advice['bags_50kg']       as int;
-    final window     = advice['planting_window'] as String;
-    final weeksLeft  = advice['weeks_to_peak']  as int;
+    final cropName    = advice['crop_name']     as String;
+    final peakWeek    = advice['peak_week']      as int;
+    final peakDate    = advice['peak_date']      as String;
+    final peakKg      = advice['peak_demand_kg'] as int;
+    final targetKg    = advice['target_kg']      as int;
+    final plantingKg  = advice['planting_kg']    as int;
+    final seedBags    = advice['seed_bags']      as int;
+    final bagKg       = advice['bag_kg']         as int;
+    final requiredAcres = (advice['required_acres'] as num).toDouble();
+    final farmSize    = (advice['farm_size']     as num).toDouble();
+    final marketShare = (advice['market_share']  as num).toDouble();
+    final weeksToPlant = advice['weeks_to_plant'] as int;
+    final plantByDate = advice['plant_by_date']  as String;
+    final urgency     = advice['urgency']        as String;
+    final urgencyMsg  = advice['urgency_msg']    as String;
+    final marketSignal = advice['market_signal'] as String;
+    final signalMsg   = advice['signal_msg']     as String;
+    final trendMsg    = advice['trend_msg']      as String;
+    final weeksLeft   = advice['weeks_to_peak']  as int;
+    final window      = urgencyMsg;
     final crop       = kCrops.firstWhere(
         (c) => c.en == cropName || c.rw == cropName,
         orElse: () => kCrops.first);
@@ -2476,33 +2505,58 @@ class _PlantingAdviceSheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
+            // ── Your farm info bar ──────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: kSprout.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: kSprout.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _FarmStat('🏡', T.rw ? 'Inzara' : 'Farm',
+                      '${farmSize.toStringAsFixed(1)} ac'),
+                  _FarmStat('📊', T.rw ? 'Igice' : 'Share',
+                      '${marketShare.toStringAsFixed(1)}%'),
+                  _FarmStat('🌾', T.rw ? 'Akari' : 'Needed',
+                      '${requiredAcres.toStringAsFixed(2)} ac'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // ── 3 KPI cards ─────────────────────────────────────────
             Row(children: [
               Expanded(child: _AdviceKpi(
                 icon: '🌱',
-                label: T.plantKg,
+                label: T.rw ? 'Gutera (kg)' : 'Plant (kg)',
                 value: _fmtK(plantingKg),
                 color: kSprout,
-                sub: T.inclBuffer,
+                sub: T.rw ? 'hamwe na 20%' : 'incl. 20% buffer',
               )),
               const SizedBox(width: 10),
               Expanded(child: _AdviceKpi(
                 icon: '📦',
-                label: T.bags50kg,
-                value: '$bags50',
+                label: T.rw ? 'Amasaho' : 'Seed Bags',
+                value: '$seedBags',
                 color: kStraw,
-                sub: T.toPrep,
+                sub: '$bagKg kg/bag',
               )),
               const SizedBox(width: 10),
               Expanded(child: _AdviceKpi(
                 icon: '⏰',
-                label: T.weeksLeft,
-                value: '$weeksLeft',
+                label: T.rw ? 'Ibyumweru' : 'Wks to Plant',
+                value: '$weeksToPlant',
                 color: urgencyColor,
-                sub: T.untilPeak,
+                sub: T.rw ? 'mbere yo gutera' : 'before deadline',
               )),
             ]),
             const SizedBox(height: 14),
 
+            // ── When to plant ────────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(14),
@@ -2519,17 +2573,27 @@ class _PlantingAdviceSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(T.whenToPlant,
+                      Text(T.rw ? 'Igihe cyo Gutera' : 'When to Plant',
                           style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 12,
                               color: kForest)),
                       const SizedBox(height: 2),
-                      Text(window,
+                      Text(urgencyMsg.isNotEmpty ? urgencyMsg : window,
                           style: const TextStyle(
                               fontSize: 13,
                               color: kText,
                               height: 1.5)),
+                      if (plantByDate.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          '${T.rw ? "Teranya:" : "Plant by:"} $plantByDate',
+                          style: const TextStyle(
+                              fontSize: 11,
+                              color: kMuted,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -2537,14 +2601,71 @@ class _PlantingAdviceSheet extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
+            // ── Market signal (oversupply / shortage / balanced) ─────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: marketSignal == 'oversupply_risk'
+                    ? kRed.withValues(alpha: 0.06)
+                    : marketSignal == 'shortage_risk'
+                        ? kSprout.withValues(alpha: 0.06)
+                        : kAmber.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: marketSignal == 'oversupply_risk'
+                      ? kRed.withValues(alpha: 0.25)
+                      : marketSignal == 'shortage_risk'
+                          ? kSprout.withValues(alpha: 0.25)
+                          : kAmber.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    marketSignal == 'oversupply_risk' ? '⚠️'
+                        : marketSignal == 'shortage_risk' ? '🚀' : '✅',
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          marketSignal == 'oversupply_risk'
+                              ? (T.rw ? 'Icyitonderwa: Isoko' : 'Market Warning')
+                              : marketSignal == 'shortage_risk'
+                                  ? (T.rw ? 'Amahirwe: Isoko' : 'Market Opportunity')
+                                  : (T.rw ? 'Isoko Iringaniye' : 'Market Balanced'),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                              color: marketSignal == 'oversupply_risk'
+                                  ? kRed : marketSignal == 'shortage_risk'
+                                      ? kSprout : kAmber),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(signalMsg,
+                            style: const TextStyle(
+                                fontSize: 12, color: kText, height: 1.5)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // ── Why this forecast ────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: kAmber.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: kAmber.withValues(alpha: 0.25)),
+                border: Border.all(color: kAmber.withValues(alpha: 0.25)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2552,45 +2673,9 @@ class _PlantingAdviceSheet extends StatelessWidget {
                   const Text('💡', style: TextStyle(fontSize: 20)),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: RichText(
-                      text: TextSpan(
+                    child: Text(trendMsg,
                         style: const TextStyle(
-                            fontSize: 12,
-                            color: kText,
-                            height: 1.6),
-                        children: [
-                          TextSpan(
-                            text: T.rw ? 'Tegura ' : 'Target ',
-                          ),
-                          TextSpan(
-                            text: '${_fmtK(targetKg)} kg',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: kForest),
-                          ),
-                          TextSpan(
-                            text: T.rw
-                                ? ' kugirango usubize isoko. '
-                                : ' to supply the market. ',
-                          ),
-                          TextSpan(text: T.postHarvestNote),
-                          TextSpan(
-                            text: T.rw ? ' Gutera ' : ' Plant ',
-                          ),
-                          TextSpan(
-                            text: '${_fmtK(plantingKg)} kg',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: kSprout),
-                          ),
-                          TextSpan(
-                            text: T.rw
-                                ? ' bizakugurana iyo namba.'
-                                : ' to achieve this.',
-                          ),
-                        ],
-                      ),
-                    ),
+                            fontSize: 12, color: kText, height: 1.6)),
                   ),
                 ],
               ),
@@ -2607,6 +2692,27 @@ class _PlantingAdviceSheet extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FarmStat extends StatelessWidget {
+  final String icon, label, value;
+  const _FarmStat(this.icon, this.label, this.value);
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(icon, style: const TextStyle(fontSize: 18)),
+        const SizedBox(height: 2),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: kForest)),
+        Text(label,
+            style: const TextStyle(fontSize: 10, color: kMuted)),
+      ],
     );
   }
 }
