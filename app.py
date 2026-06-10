@@ -675,7 +675,6 @@ def login():
         pwd    = data.get('password', '')
         if not phone or not pwd:
             return jsonify({"status": "error", "message": "Phone and password required"}), 400
-
         hashed = hashlib.sha256(pwd.encode()).hexdigest()
         db     = get_db()
         cur    = db.cursor(dictionary=True)
@@ -683,8 +682,7 @@ def login():
                     (phone, hashed))
         user   = cur.fetchone()
         cur.close(); db.close()
-
-     if user:
+        if user:
             token = jwt.encode({
                 'user_id': user['user_id'],
                 'phone': user['phone'],
