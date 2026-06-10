@@ -434,9 +434,20 @@ def forecast(crop_id):
             trend_rw = (f"Impamvu y'iri teganyabikorwa: Ibisabwa bya {name_rw} biringaniye hafi ya {round(avg_demand_kg/1000,1)}t/icyumweru. "
                         f"Imiterere y'isoko muri Musanze ihuye n'imigenzo ya kera y'ibihe.")
 
-        actual_tail = series.values[-12:]
-        naive_pred  = series.values[-13:-1]
-        metrics     = compute_metrics(actual_tail, naive_pred)
+        # Metrics: each model back-predicts last 12 weeks vs actual
+        actual_tail  = series.values[-12:]
+        back_raw, _  = fn(series[:-12], 12)
+        back_pred    = np.clip(back_raw, 0, None)[:12]
+        min_len      = min(len(actual_tail), len(back_pred))
+        metrics      = compute_metrics(actual_tail[:min_len], back_pred[:min_len])
+        metrics["mae_label_en"]  = "Mean Absolute Error"
+        metrics["mae_label_rw"]  = "Ikosa Riringaniye"
+        metrics["rmse_label_en"] = "Root Mean Square Error"
+        metrics["rmse_label_rw"] = "Ikosa Rinini"
+        metrics["mape_label_en"] = "Mean Absolute % Error"
+        metrics["mape_label_rw"] = "Ikosa mu Ijana"
+        metrics["accuracy_en"]   = f"{round(100 - metrics['MAPE'], 1)}% accurate"
+        metrics["accuracy_rw"]   = f"Ireme: {round(100 - metrics['MAPE'], 1)}%"
 
         return jsonify({
             "status":    "success",
