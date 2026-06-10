@@ -663,7 +663,44 @@ def market_insights():
         return jsonify({"status": "success", "insights": insights})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
+# =============================================================
+# ROUTES — WEATHER
+# =============================================================
+@app.route('/weather')
+def weather():
+    try:
+        import requests as req
+        url = (
+            "https://api.open-meteo.com/v1/forecast"
+            "?latitude=-1.4987&longitude=29.6337"
+            "&current=temperature_2m,relative_humidity_2m,rain,windspeed_10m"
+            "&daily=temperature_2m_max,temperature_2m_min,rain_sum"
+            "&timezone=Africa%2FKigali&forecast_days=7"
+        )
+        r    = req.get(url, timeout=10)
+        data = r.json()
+        c    = data['current']
+        d    = data['daily']
+        return jsonify({
+            "status":   "success",
+            "location": "Musanze, Rwanda",
+            "current": {
+                "temperature": c['temperature_2m'],
+                "humidity":    c['relative_humidity_2m'],
+                "rain":        c['rain'],
+                "windspeed":   c['windspeed_10m']
+            },
+            "forecast": [
+                {
+                    "date":     d['time'][i],
+                    "max_temp": d['temperature_2m_max'][i],
+                    "min_temp": d['temperature_2m_min'][i],
+                    "rain":     d['rain_sum'][i]
+                } for i in range(7)
+            ]
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 # =============================================================
 # ROUTES €” AUTH
 # =============================================================
