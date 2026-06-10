@@ -686,7 +686,7 @@ def login():
             token = jwt.encode({
                 'user_id': user['user_id'],
                 'phone': user['phone'],
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
+                'exp': datetime.utcnow() + timedelta(days=30)
             }, 'agri_forecast_secret_key', algorithm='HS256')
             return jsonify({"status": "success", "user": user, "token": token})
         return jsonify({"status": "error", "message": "Invalid phone or password"}), 401
