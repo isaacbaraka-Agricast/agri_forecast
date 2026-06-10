@@ -1,8 +1,8 @@
-# =============================================================
-# app.py  Äî  Agri Forecast API  v3.1  (FIXED)
-# Automated Demand Forecasting System Äî Musanze District, Rwanda
+Ôªø# =============================================================
+# app.py  ‚Ç¨‚Äù  Agri Forecast API  v3.1  (FIXED)
+# Automated Demand Forecasting System ‚Ç¨‚Äù Musanze District, Rwanda
 # Author: BARAKA ISAAC (2305000514)  |  Supervisor: Dr MUSABE JEAN BOSCO
-# University of Kigali Äî School of Computing and IT Äî BBIT
+# University of Kigali ‚Ç¨‚Äù School of Computing and IT ‚Ç¨‚Äù BBIT
 # =============================================================
 
 from flask import Flask, jsonify, request, send_file
@@ -30,7 +30,7 @@ except ImportError:
     def send_push_notification(*a, **k): return {"status": "disabled"}
 
 app = Flask(__name__)
-CORS(app, origins='*', allow_headers=['Content-Type', 'Authorization'], methods=['GET', 'POST', 'OPTIONS'])
+CORS(app, origins="*", allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST", "OPTIONS"])
 
 import os
 from urllib.parse import urlparse
@@ -52,7 +52,7 @@ def get_db():
     return mysql.connector.connect(**DB_CONFIG)
 
 # =============================================================
-# CROPS  Äî  key crops of Musanze District
+# CROPS  ‚Ç¨‚Äù  key crops of Musanze District
 # =============================================================
 CROPS = {
     1: "Irish Potato",
@@ -116,7 +116,7 @@ def _generate_synthetic_data(crop_id):
 # =============================================================
 
 def run_arima(series, steps=12):
-    """ARIMA(2,1,1) Äî AutoRegressive Integrated Moving Average."""
+    """ARIMA(2,1,1) ‚Ç¨‚Äù AutoRegressive Integrated Moving Average."""
     model  = ARIMA(series, order=(2, 1, 1))
     fitted = model.fit()
     fc     = fitted.forecast(steps=steps)
@@ -203,7 +203,7 @@ def compute_metrics(actual, predicted):
     return {"MAE": round(mae, 2), "RMSE": round(rmse, 2), "MAPE": round(mape, 2)}
 
 # =============================================================
-# ROUTES Äî STATIC
+# ROUTES ‚Ç¨‚Äù STATIC
 # =============================================================
 @app.route('/')
 def home():
@@ -216,14 +216,14 @@ def home():
 def api_status():
     return jsonify({
         "status":  "running",
-        "project": "Agri Forecast Äî Musanze District, Rwanda",
+        "project": "Agri Forecast ‚Ç¨‚Äù Musanze District, Rwanda",
         "version": "3.1",
         "models":  ["ARIMA", "RandomForest", "LSTM", "Ensemble"],
         "crops":   list(CROPS.values())
     })
 
 # =============================================================
-# ROUTES Äî CROPS
+# ROUTES ‚Ç¨‚Äù CROPS
 # =============================================================
 @app.route('/crops')
 def get_crops():
@@ -239,7 +239,7 @@ def get_crops():
         return jsonify({"status": "success", "crops": crops})
 
 # =============================================================
-# ROUTES Äî SUMMARY
+# ROUTES ‚Ç¨‚Äù SUMMARY
 # =============================================================
 @app.route('/summary')
 def summary():
@@ -265,7 +265,7 @@ def summary():
         return jsonify({"status": "success", "data": rows})
 
 # =============================================================
-# ROUTES Äî HISTORY
+# ROUTES ‚Ç¨‚Äù HISTORY
 # =============================================================
 @app.route('/history/<int:crop_id>')
 def get_history(crop_id):
@@ -292,7 +292,7 @@ def get_history(crop_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # =============================================================
-# ROUTES Äî DEMAND FORECAST
+# ROUTES ‚Ç¨‚Äù DEMAND FORECAST
 # =============================================================
 @app.route('/forecast/<int:crop_id>')
 def forecast(crop_id):
@@ -350,7 +350,7 @@ def forecast(crop_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # =============================================================
-# ROUTES Äî PRICE FORECAST  (FIXED: correct field names)
+# ROUTES ‚Ç¨‚Äù PRICE FORECAST  (FIXED: correct field names)
 # =============================================================
 @app.route('/price_forecast/<int:crop_id>')
 def price_forecast(crop_id):
@@ -375,7 +375,7 @@ def price_forecast(crop_id):
             forecast_list.append({
                 "week":       i + 1,
                 "date":       week_date.strftime("%Y-%m-%d"),
-                "price_rwf":  round(float(val), 1),        # Üê field Flutter reads
+                "price_rwf":  round(float(val), 1),        # ‚Ä†¬ê field Flutter reads
                 "lower_kg":  round(float(max(ci[0], 80)), 1),
                 "upper_kg":  round(float(min(ci[1], 2000)), 1),
                 "trend":      "up" if val >= prev else "down",
@@ -393,13 +393,13 @@ def price_forecast(crop_id):
             "status":        "success",
             "crop_name":     crop_name,
             "model":         model_name.upper(),
-            "current_price": current_price,           # Üê Flutter PricePage reads this
+            "current_price": current_price,           # ‚Ä†¬ê Flutter PricePage reads this
             "forecast":      forecast_list,
             "best_week":     best_week,
             "max_price":     max_price,
             "advice": {
-                "best_time_to_sell": f"Week {best_week} ({best_date})",  # Üê Flutter reads this
-                "peak_price":        max_price,                           # Üê Flutter reads this
+                "best_time_to_sell": f"Week {best_week} ({best_date})",  # ‚Ä†¬ê Flutter reads this
+                "peak_price":        max_price,                           # ‚Ä†¬ê Flutter reads this
                 "tip_en": f"Best time to sell {crop_name} is Week {best_week} "
                           f"when price peaks at {max_price} RWF/kg.",
                 "tip_rw": f"Igihe cyiza cyo kugurisha {crop_name} ni icyumweru cya {best_week} "
@@ -410,7 +410,7 @@ def price_forecast(crop_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # =============================================================
-# ROUTES Äî ALERTS  (NEW Äî was completely missing)
+# ROUTES ‚Ç¨‚Äù ALERTS  (NEW ‚Ç¨‚Äù was completely missing)
 # =============================================================
 @app.route('/alerts/<int:crop_id>')
 def get_alerts(crop_id):
@@ -456,8 +456,8 @@ def get_alerts(crop_id):
                 "type":     "demand_high",
                 "level":    "success",
                 "week":     peak_qty_week,
-                "title_en": f"High Demand Expected Äî Week {peak_qty_week}",
-                "title_rw": f"Isoko Rinshi Ry'iteganywa Äî Icyumweru {peak_qty_week}",
+                "title_en": f"High Demand Expected ‚Ç¨‚Äù Week {peak_qty_week}",
+                "title_rw": f"Isoko Rinshi Ry'iteganywa ‚Ç¨‚Äù Icyumweru {peak_qty_week}",
                 "msg_en":   f"{crop_name} demand is forecast to reach {peak_qty:,.0f} kg in Week {peak_qty_week}. "
                             f"This is {abs(qty_change_pct):.0f}% above current levels. "
                             f"Bring extra stock to market this week.",
@@ -471,8 +471,8 @@ def get_alerts(crop_id):
                 "type":     "demand_low",
                 "level":    "warning",
                 "week":     low_qty_week,
-                "title_en": f"Low Demand Warning Äî Week {low_qty_week}",
-                "title_rw": f"Icyemezo: Isoko Riguye Äî Icyumweru {low_qty_week}",
+                "title_en": f"Low Demand Warning ‚Ç¨‚Äù Week {low_qty_week}",
+                "title_rw": f"Icyemezo: Isoko Riguye ‚Ç¨‚Äù Icyumweru {low_qty_week}",
                 "msg_en":   f"{crop_name} demand may drop to {low_qty:,.0f} kg in Week {low_qty_week}. "
                             f"Reduce quantities or delay selling to avoid losses.",
                 "msg_rw":   f"Isoko rya {crop_name} rirashobora kugwa kuri {low_qty:,.0f} kg mu cyumweru cya {low_qty_week}. "
@@ -497,8 +497,8 @@ def get_alerts(crop_id):
                 "type":     "price_high",
                 "level":    "success",
                 "week":     peak_price_week,
-                "title_en": f"Price Rising Äî Best Week to Sell: Week {peak_price_week}",
-                "title_rw": f"Igiciro Kizamuka Äî Cyumweru Cyiza: {peak_price_week}",
+                "title_en": f"Price Rising ‚Ç¨‚Äù Best Week to Sell: Week {peak_price_week}",
+                "title_rw": f"Igiciro Kizamuka ‚Ç¨‚Äù Cyumweru Cyiza: {peak_price_week}",
                 "msg_en":   f"Price forecast to peak at {peak_price:,.0f} RWF/kg in Week {peak_price_week}. "
                             f"Current price: {current_price:,.0f} RWF/kg. "
                             f"Hold your stock and sell in Week {peak_price_week} for maximum profit.",
@@ -511,8 +511,8 @@ def get_alerts(crop_id):
                 "type":     "price_low",
                 "level":    "danger",
                 "week":     low_price_week,
-                "title_en": f"Price Drop Alert Äî Week {low_price_week}",
-                "title_rw": f"Icyemezo: Igiciro Kigwa Äî Icyumweru {low_price_week}",
+                "title_en": f"Price Drop Alert ‚Ç¨‚Äù Week {low_price_week}",
+                "title_rw": f"Icyemezo: Igiciro Kigwa ‚Ç¨‚Äù Icyumweru {low_price_week}",
                 "msg_en":   f"Price may drop to {low_price:,.0f} RWF/kg in Week {low_price_week}. "
                             f"Sell your {crop_name} this week at {current_price:,.0f} RWF/kg "
                             f"to avoid losses.",
@@ -525,8 +525,8 @@ def get_alerts(crop_id):
                 "type":     "price_stable",
                 "level":    "info",
                 "week":     0,
-                "title_en": f"Price Stable Äî {current_price:,.0f} RWF/kg",
-                "title_rw": f"Igiciro Ryiringaniye Äî {current_price:,.0f} RWF/kg",
+                "title_en": f"Price Stable ‚Ç¨‚Äù {current_price:,.0f} RWF/kg",
+                "title_rw": f"Igiciro Ryiringaniye ‚Ç¨‚Äù {current_price:,.0f} RWF/kg",
                 "msg_en":   f"{crop_name} price is stable around {current_price:,.0f} RWF/kg. "
                             f"Best selling opportunity is Week {peak_price_week} at {peak_price:,.0f} RWF/kg.",
                 "msg_rw":   f"Igiciro rya {crop_name} ryiringaniye kuri {current_price:,.0f} RWF/kg. "
@@ -537,14 +537,14 @@ def get_alerts(crop_id):
         month = datetime.today().month
         season_tips = {
             (3, 4, 5): ("Planting Season", "Igihe cy'Imbuto",
-                         "Long rains season (MarchÄìMay). Good time to plant. Prices tend to rise after harvest.",
-                         "Igihe cy'imvura nini (WerurweÄìGicurasi). Igihe cyiza cyo gutera. Ibiciro bishobora kuzamuka nyuma y'isarura."),
+                         "Long rains season (March‚Ç¨‚ÄúMay). Good time to plant. Prices tend to rise after harvest.",
+                         "Igihe cy'imvura nini (Werurwe‚Ç¨‚ÄúGicurasi). Igihe cyiza cyo gutera. Ibiciro bishobora kuzamuka nyuma y'isarura."),
             (6, 7):    ("Harvest Season", "Igihe cy'Isarura",
-                         "Main harvest period. High supply expected Äî prices may soften. Sell early or store if possible.",
-                         "Igihe cy'isarura nini. Umusaruro mwinshi witeganyijwe Äî ibiciro birashobora kugwa. Gurisha vuba cyangwa bika niba bishoboka."),
+                         "Main harvest period. High supply expected ‚Ç¨‚Äù prices may soften. Sell early or store if possible.",
+                         "Igihe cy'isarura nini. Umusaruro mwinshi witeganyijwe ‚Ç¨‚Äù ibiciro birashobora kugwa. Gurisha vuba cyangwa bika niba bishoboka."),
             (10, 11, 12): ("Short Rains", "Imvura Ngufi",
-                            "Short rains season (OctÄìDec). Secondary planting opportunity. Monitor prices closely.",
-                            "Igihe cy'imvura ngufi (UkwakiraÄìUkuboza). Amahirwe ya kabiri yo gutera. Kurikirana ibiciro neza."),
+                            "Short rains season (Oct‚Ç¨‚ÄúDec). Secondary planting opportunity. Monitor prices closely.",
+                            "Igihe cy'imvura ngufi (Ukwakira‚Ç¨‚ÄúUkuboza). Amahirwe ya kabiri yo gutera. Kurikirana ibiciro neza."),
         }
         seasonal_msg = None
         for months_range, tips in season_tips.items():
@@ -576,7 +576,7 @@ def get_alerts(crop_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # =============================================================
-# ROUTES Äî MODEL COMPARISON
+# ROUTES ‚Ç¨‚Äù MODEL COMPARISON
 # =============================================================
 @app.route('/compare/<int:crop_id>')
 def compare_models(crop_id):
@@ -612,7 +612,7 @@ def compare_models(crop_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # =============================================================
-# ROUTES Äî SEASONAL ANALYSIS
+# ROUTES ‚Ç¨‚Äù SEASONAL ANALYSIS
 # =============================================================
 @app.route('/seasonal/<int:crop_id>')
 def seasonal_analysis(crop_id):
@@ -636,7 +636,7 @@ def seasonal_analysis(crop_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # =============================================================
-# ROUTES Äî MARKET INSIGHTS DASHBOARD
+# ROUTES ‚Ç¨‚Äù MARKET INSIGHTS DASHBOARD
 # =============================================================
 @app.route('/market_insights')
 def market_insights():
@@ -664,7 +664,7 @@ def market_insights():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 # =============================================================
-# ROUTES ó WEATHER
+# ROUTES ‚Äî WEATHER
 # =============================================================
 @app.route('/weather')
 def weather():
@@ -702,7 +702,7 @@ def weather():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 # =============================================================
-# ROUTES Äî AUTH
+# ROUTES ‚Ç¨‚Äù AUTH
 # =============================================================
 @app.route('/login', methods=['POST'])
 def login():
@@ -768,7 +768,7 @@ def register():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # =============================================================
-# ROUTES Äî ALERTS SEND / TEST
+# ROUTES ‚Ç¨‚Äù ALERTS SEND / TEST
 # =============================================================
 @app.route('/api/alerts/send', methods=['POST'])
 def send_alerts():
@@ -810,7 +810,7 @@ def test_alerts():
     return jsonify({"status": "success", "message": "Alert system operational"})
 
 # =============================================================
-# ROUTES Äî ADMIN: seed database
+# ROUTES ‚Ç¨‚Äù ADMIN: seed database
 # =============================================================
 @app.route('/admin/init_db', methods=['POST'])
 def init_db():
