@@ -4343,7 +4343,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 _InfoRow(Icons.badge,      T.roleLbl,     UserSession.role.toUpperCase()),
                 if (UserSession.sector.isNotEmpty)
                   _InfoRow(Icons.location_on, T.sectorLbl, UserSession.sector),
-                _InfoRow(Icons.agriculture, T.rw ? 'Ingano y\\'Inzara' : 'Farm Size', '${UserSession.farmSizeAcres.toStringAsFixed(1)} acres'),
+                _InfoRow(Icons.agriculture, T.rw ? 'Farm Size' : 'Farm Size', '${UserSession.farmSizeAcres.toStringAsFixed(1)} acres'),
               ],
             ),
           ),
