@@ -376,8 +376,8 @@ def price_forecast(crop_id):
                 "week":       i + 1,
                 "date":       week_date.strftime("%Y-%m-%d"),
                 "price_rwf":  round(float(val), 1),        # † field Flutter reads
-                "lower_rwf":  round(float(max(ci[0], 80)), 1),
-                "upper_rwf":  round(float(min(ci[1], 2000)), 1),
+                "lower_kg":  round(float(max(ci[0], 80)), 1),
+                "upper_kg":  round(float(min(ci[1], 2000)), 1),
                 "trend":      "up" if val >= prev else "down",
             })
 
