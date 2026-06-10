@@ -821,12 +821,14 @@ def init_db():
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                user_id    INT AUTO_INCREMENT PRIMARY KEY,
-                full_name  VARCHAR(120) NOT NULL,
-                phone      VARCHAR(20)  NOT NULL UNIQUE,
-                password   VARCHAR(64)  NOT NULL,
-                role       ENUM('farmer','buyer','cooperative','extension','admin') DEFAULT 'farmer',
-                created_at DATETIME DEFAULT NOW()
+                user_id         INT AUTO_INCREMENT PRIMARY KEY,
+                full_name       VARCHAR(120) NOT NULL,
+                phone           VARCHAR(20)  NOT NULL UNIQUE,
+                password        VARCHAR(64)  NOT NULL,
+                role            ENUM('farmer','buyer','cooperative','extension','admin') DEFAULT 'farmer',
+                sector          VARCHAR(80)  DEFAULT 'Muhoza',
+                farm_size_acres DECIMAL(6,2) DEFAULT 1.0,
+                created_at      DATETIME DEFAULT NOW()
             )
         """)
         cur.execute("""
@@ -869,6 +871,15 @@ def init_db():
 
         cur.execute("INSERT IGNORE INTO districts (district_id, district_name) VALUES (1, 'Musanze')")
 
+        try:
+            cur.execute("ALTER TABLE users ADD COLUMN sector VARCHAR(80) DEFAULT 'Muhoza'")
+        except Exception:
+            pass
+        try:
+            cur.execute("ALTER TABLE users ADD COLUMN farm_size_acres DECIMAL(6,2) DEFAULT 1.0")
+        except Exception:
+            pass
+
         admin_pwd = hashlib.sha256("admin123".encode()).hexdigest()
         cur.execute("""
             INSERT IGNORE INTO users (full_name, phone, password, role)
@@ -879,7 +890,6 @@ def init_db():
         return jsonify({"status": "success", "message": "Database initialised successfully"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
 # =============================================================
 # ENTRY POINT
 # =============================================================
