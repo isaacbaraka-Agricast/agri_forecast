@@ -7,6 +7,8 @@
 
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
+import jwt
+import datetime
 import pandas as pd
 import numpy as np
 import mysql.connector
@@ -683,7 +685,12 @@ def login():
         cur.close(); db.close()
 
         if user:
-            return jsonify({"status": "success", "user": user})
+    token = jwt.encode({
+        'user_id': user['user_id'],
+        'phone': user['phone'],
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
+    }, 'agri_forecast_secret_key', algorithm='HS256')
+    return jsonify({"status": "success", "user": user, "token": token})
         return jsonify({"status": "error", "message": "Invalid phone or password"}), 401
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
