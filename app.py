@@ -353,8 +353,9 @@ def forecast(crop_id):
 
         # --- FARMER PERSONAL DECISION LOGIC ---
         # How much of the market this farmer can realistically supply
-        farmer_capacity  = farm_size * intel["yield_kg"]
-        market_share_pct = min(farmer_capacity / total_supply_capacity, 1.0)
+        # Farmer share = their acres / total acres in Musanze for this crop
+        total_acres      = intel["farmers"] * AVG_FARM_SIZE
+        market_share_pct = min(farm_size / total_acres, 1.0)
 
         # Target = farmer share of peak demand + 20% post-harvest loss buffer
         farmer_target_kg = round(peak_demand_kg * market_share_pct, 1)
