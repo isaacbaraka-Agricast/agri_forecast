@@ -294,6 +294,20 @@ def get_history(crop_id):
 # =============================================================
 # ROUTES €” DEMAND FORECAST
 # =============================================================
+# =============================================================
+# CROP INTELLIGENCE - RAB Musanze data (yields, cycles, seed)
+# =============================================================
+CROP_INTEL = {
+    1: dict(yield_kg=8000, grow_weeks=16, seed_kg=400,  farmers=900, bag_kg=50,  name_rw="Ibirayi"),
+    2: dict(yield_kg=2500, grow_weeks=14, seed_kg=25,   farmers=700, bag_kg=90,  name_rw="Ibigori"),
+    3: dict(yield_kg=1800, grow_weeks=13, seed_kg=80,   farmers=600, bag_kg=50,  name_rw="Ibishyimbo"),
+    4: dict(yield_kg=6000, grow_weeks=10, seed_kg=0.5,  farmers=400, bag_kg=20,  name_rw="Inyanya"),
+    5: dict(yield_kg=2000, grow_weeks=18, seed_kg=30,   farmers=500, bag_kg=50,  name_rw="Isorgho"),
+    6: dict(yield_kg=2200, grow_weeks=15, seed_kg=120,  farmers=350, bag_kg=50,  name_rw="Ingano"),
+    7: dict(yield_kg=5000, grow_weeks=52, seed_kg=0,    farmers=800, bag_kg=20,  name_rw="Igitoki"),
+}
+AVG_FARM_SIZE = 1.5  # acres - Rwanda smallholder average (RAB 2023)
+
 @app.route('/forecast/<int:crop_id>')
 def forecast(crop_id):
     try:
@@ -302,28 +316,123 @@ def forecast(crop_id):
 
         model_name = request.args.get('model', 'arima')
         steps      = int(request.args.get('weeks', 12))
-        fn         = get_forecast_fn(model_name)
-        raw, conf  = fn(series, steps)
-        raw        = np.clip(raw, 0, None)
+        farm_size  = float(request.args.get('farm_size', 1.5))
 
-        start_date = datetime.today()
+        fn        = get_forecast_fn(model_name)
+        raw, conf = fn(series, steps)
+        raw       = np.clip(raw, 0, None)
+
+        intel      = CROP_INTEL.get(crop_id, CROP_INTEL[1])
+        crop_name  = CROPS.get(crop_id, f"Crop {crop_id}")
+        name_rw    = intel["name_rw"]
+        grow_weeks = intel["grow_weeks"]
+        bag_kg     = intel["bag_kg"]
+
+        # Total production capacity of ALL farmers in Musanze for this crop
+        total_supply_capacity = intel["farmers"] * AVG_FARM_SIZE * intel["yield_kg"]
+
+        start_date    = datetime.today()
         forecast_list = []
         for i, (val, ci) in enumerate(zip(raw, conf)):
             week_date = start_date + timedelta(weeks=i)
             demand    = round(float(val), 1)
             forecast_list.append({
-                "week":         i + 1,
-                "date":         week_date.strftime("%Y-%m-%d"),
-                "demand_kg":    demand,
-                "demand_bags":  round(demand / 50, 1),
-                "lower_kg":     round(float(max(ci[0], 0)), 1),
-                "upper_kg":     round(float(max(ci[1], 0)), 1),
+                "week":        i + 1,
+                "date":        week_date.strftime("%Y-%m-%d"),
+                "demand_kg":   demand,
+                "demand_bags": round(demand / bag_kg, 1),
+                "lower_kg":    round(float(max(ci[0], 0)), 1),
+                "upper_kg":    round(float(max(ci[1], 0)), 1),
             })
 
-        demands   = [f["demand_kg"] for f in forecast_list]
-        peak_week = demands.index(max(demands)) + 1
-        low_week  = demands.index(min(demands)) + 1
-        crop_name = CROPS.get(crop_id, f"Crop {crop_id}")
+        demands        = [f["demand_kg"] for f in forecast_list]
+        peak_week      = demands.index(max(demands)) + 1
+        low_week       = demands.index(min(demands)) + 1
+        peak_demand_kg = max(demands)
+        avg_demand_kg  = round(sum(demands) / len(demands), 1)
+
+        # --- FARMER PERSONAL DECISION LOGIC ---
+        # How much of the market this farmer can realistically supply
+        farmer_capacity  = farm_size * intel["yield_kg"]
+        market_share_pct = min(farmer_capacity / total_supply_capacity, 1.0)
+
+        # Target = farmer share of peak demand + 20% post-harvest loss buffer
+        farmer_target_kg = round(peak_demand_kg * market_share_pct, 1)
+        farmer_target_kg = max(farmer_target_kg, 50)
+        plant_target_kg  = round(farmer_target_kg * 1.20, 1)
+
+        # Land and seed needed to hit that target
+        required_acres   = round(plant_target_kg / intel["yield_kg"], 2)
+        required_acres   = min(required_acres, farm_size)
+        seed_bags_needed = max(1, round((required_acres * intel["seed_kg"]) / bag_kg, 1)) if intel["seed_kg"] > 0 else 0
+
+        # WHEN to plant: work backwards from peak demand week minus growing cycle
+        peak_date         = start_date + timedelta(weeks=peak_week)
+        plant_by_date     = peak_date - timedelta(weeks=grow_weeks)
+        weeks_until_plant = max(0, (plant_by_date - start_date).days // 7)
+
+        # Planting urgency
+        if weeks_until_plant == 0:
+            urgency    = "overdue"
+            urgency_en = f"Plant immediately or buy {crop_name} from market - growing window for this peak has passed"
+            urgency_rw = f"Tera {name_rw} ubu ako kanya cyangwa guze aho bihari - igihe cy'ubuhinzi cyarangiye"
+        elif weeks_until_plant <= 2:
+            urgency    = "urgent"
+            urgency_en = f"Urgent: Plant {crop_name} within {weeks_until_plant} week(s) to harvest in time for peak demand (Week {peak_week})"
+            urgency_rw = f"Byihutirwa: Tera {name_rw} mu byumweru {weeks_until_plant} kugirango usarure ku gihe cy'isoko rinshi (Icyumweru {peak_week})"
+        elif weeks_until_plant <= 6:
+            urgency    = "soon"
+            urgency_en = f"Plan to plant {crop_name} within {weeks_until_plant} weeks to reach peak market demand at Week {peak_week}"
+            urgency_rw = f"Teganya gutera {name_rw} mu byumweru {weeks_until_plant} kugirango ugere ku isoko rinshi mu cyumweru cya {peak_week}"
+        else:
+            urgency    = "flexible"
+            urgency_en = f"You have {weeks_until_plant} weeks before you need to plant {crop_name} - monitor market trends"
+            urgency_rw = f"Ufite ibyumweru {weeks_until_plant} mbere y'igihe cyo gutera {name_rw} - kurikirana imiterere y'isoko"
+
+        # Market balance: will all farmers produce too much or too little?
+        total_forecast_demand = sum(demands)
+        supply_ratio = total_supply_capacity / (total_forecast_demand * steps) if total_forecast_demand > 0 else 1
+
+        if supply_ratio > 1.3:
+            market_signal = "oversupply_risk"
+            signal_en = (f"Oversupply Risk: If all {intel['farmers']} farmers in Musanze grow {crop_name}, "
+                         f"total supply ({round(total_supply_capacity/1000,1)}t) will exceed forecast demand. "
+                         f"Grow only your target share ({round(plant_target_kg)}kg) to avoid price crash.")
+            signal_rw = (f"Ingorane y'umusaruro mwinshi: Niba abahinzi bose {intel['farmers']} bo muri Musanze batera {name_rw}, "
+                         f"umusaruro wose ({round(total_supply_capacity/1000,1)}t) uzarenza ibisabwa. "
+                         f"Tera gusa ingano y'intego yawe ({round(plant_target_kg)}kg) kugirango wirinde kugwa kw'igiciro.")
+        elif supply_ratio < 0.7:
+            market_signal = "shortage_risk"
+            signal_en = (f"Market Opportunity: Forecast demand for {crop_name} is high but supply capacity is low. "
+                         f"Growing {crop_name} this season is a strong decision - prices should stay high.")
+            signal_rw = (f"Amahirwe y'isoko: Ibisabwa bya {name_rw} ni byinshi ariko ubushobozi bw'umusaruro ni buke. "
+                         f"Gutera {name_rw} muri iyi myaka ni icyemezo cyiza - ibiciro bigomba gukomeza guturika.")
+        else:
+            market_signal = "balanced"
+            signal_en = (f"Market is balanced for {crop_name}. "
+                         f"If you plant your target ({round(plant_target_kg)}kg worth), "
+                         f"you will supply your fair share ({round(market_share_pct*100,1)}%) of market demand without causing oversupply.")
+            signal_rw = (f"Isoko ya {name_rw} iringaniye. "
+                         f"Nuhinga ingano y'intego yawe ({round(plant_target_kg)}kg), "
+                         f"uzatanga igice cyawe ({round(market_share_pct*100,1)}%) cy'ibisabwa nta kuzura isoko.")
+
+        # WHY is demand at this level - trend explanation
+        trend = round(float(raw[-1]) - float(raw[0]), 1)
+        if trend > avg_demand_kg * 0.1:
+            trend_en = (f"Why this forecast: {crop_name} demand is rising (+{round(trend/1000,1)}t over {steps} weeks). "
+                        f"Seasonal harvest ending and population growth are driving higher demand.")
+            trend_rw = (f"Impamvu y'iri teganyabikorwa: Ibisabwa bya {name_rw} biriyongera (+{round(trend/1000,1)}t mu byumweru {steps}). "
+                        f"Iherezo ry'igisari n'iyongezeka ry'abaturage bitera ibisabwa byinshi.")
+        elif trend < -avg_demand_kg * 0.1:
+            trend_en = (f"Why this forecast: {crop_name} demand is falling ({round(trend/1000,1)}t over {steps} weeks). "
+                        f"Harvest season is bringing more supply to market, reducing prices and demand.")
+            trend_rw = (f"Impamvu y'iri teganyabikorwa: Ibisabwa bya {name_rw} biragabanuka ({round(trend/1000,1)}t mu byumweru {steps}). "
+                        f"Igihe cy'isarura cyerekana umusaruro mwinshi ku isoko, bigabanya ibiciro n'ibisabwa.")
+        else:
+            trend_en = (f"Why this forecast: {crop_name} demand is stable at ~{round(avg_demand_kg/1000,1)}t/week. "
+                        f"Market conditions in Musanze are consistent with historical seasonal patterns.")
+            trend_rw = (f"Impamvu y'iri teganyabikorwa: Ibisabwa bya {name_rw} biringaniye hafi ya {round(avg_demand_kg/1000,1)}t/icyumweru. "
+                        f"Imiterere y'isoko muri Musanze ihuye n'imigenzo ya kera y'ibihe.")
 
         actual_tail = series.values[-12:]
         naive_pred  = series.values[-13:-1]
@@ -335,15 +444,44 @@ def forecast(crop_id):
             "model":     model_name.upper(),
             "forecast":  forecast_list,
             "metrics":   metrics,
+
+            # What the whole market needs
+            "market": {
+                "peak_week":      peak_week,
+                "low_week":       low_week,
+                "peak_demand_kg": peak_demand_kg,
+                "avg_demand_kg":  avg_demand_kg,
+                "total_farmers":  intel["farmers"],
+                "signal":         market_signal,
+                "signal_en":      signal_en,
+                "signal_rw":      signal_rw,
+                "trend_en":       trend_en,
+                "trend_rw":       trend_rw,
+            },
+
+            # What THIS farmer personally should do
+            "farmer_advice": {
+                "farm_size_acres":   farm_size,
+                "market_share_pct":  round(market_share_pct * 100, 1),
+                "farmer_target_kg":  farmer_target_kg,
+                "plant_target_kg":   plant_target_kg,
+                "required_acres":    required_acres,
+                "seed_bags_needed":  seed_bags_needed,
+                "bag_kg":            bag_kg,
+                "plant_by_date":     plant_by_date.strftime("%Y-%m-%d"),
+                "weeks_until_plant": weeks_until_plant,
+                "grow_weeks":        grow_weeks,
+                "urgency":           urgency,
+                "urgency_en":        urgency_en,
+                "urgency_rw":        urgency_rw,
+            },
+
+            # Legacy field - keeps existing Flutter UI working
             "advice": {
                 "peak_week": peak_week,
                 "low_week":  low_week,
-                "tip_en": f"{crop_name} demand peaks in Week {peak_week}. "
-                          f"Plan your harvest to arrive then. "
-                          f"Avoid large quantities in Week {low_week}.",
-                "tip_rw": f"{crop_name} izagera ku isoko rinshi mu cyumweru cya {peak_week}. "
-                          f"Gezaho umusaruro wawe muri icyo gihe. "
-                          f"Irinde kuzana byinshi mu cyumweru cya {low_week}.",
+                "tip_en":    urgency_en,
+                "tip_rw":    urgency_rw,
             }
         })
     except Exception as e:
