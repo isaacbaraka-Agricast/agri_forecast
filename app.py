@@ -476,7 +476,7 @@ def forecast(crop_id):
             # What THIS farmer personally should do
             "farmer_advice": {
                 "farm_size_acres":   farm_size,
-                "market_share_pct":  round(market_share_pct * 100, 1),
+                "market_share_pct":  round(market_share_pct * 100, 2),
                 "farmer_target_kg":  farmer_target_kg,
                 "plant_target_kg":   plant_target_kg,
                 "required_acres":    required_acres,
