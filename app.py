@@ -1078,6 +1078,24 @@ def seed_market():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+@app.route('/admin/reset_password', methods=['POST'])
+def reset_password():
+    try:
+        data     = request.get_json()
+        phone    = data.get('phone')
+        password = data.get('password')
+        db  = get_db()
+        cur = db.cursor()
+        cur.execute("UPDATE users SET password=%s WHERE phone=%s", (password, phone))
+        db.commit()
+        rows = cur.rowcount
+        cur.close()
+        db.close()
+        return jsonify({"status": "success", "updated": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 if __name__ == '__main__':
     def open_browser():
         webbrowser.open('http://127.0.0.1:5000')
