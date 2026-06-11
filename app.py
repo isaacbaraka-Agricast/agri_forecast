@@ -398,11 +398,9 @@ def forecast(crop_id):
 
         if supply_ratio > 1.3:
             market_signal = "oversupply_risk"
-            signal_en = (f"Oversupply Risk: If all {intel['farmers']} farmers in Musanze grow {crop_name}, "
-                         f"total supply ({round(total_supply_capacity/1000,1)}t) will exceed forecast demand. "
-                         f"Grow only your target share ({round(plant_target_kg)}kg) to avoid price crash.")
-            signal_rw = (f"Ingorane y'umusaruro mwinshi: Niba abahinzi bose {intel['farmers']} bo muri Musanze batera {name_rw}, "
-                         f"umusaruro wose ({round(total_supply_capacity/1000,1)}t) uzarenza ibisabwa. "
+            signal_en = (f"⚠️ Oversupply Risk: Market demand may be exceeded this season. "
+                         f"Grow only your target ({round(plant_target_kg)}kg) to protect your price.")
+            signal_rw = (f"Ingorane y'umusaruro mwinshi: Isoko irashobora kuzura uyu mwaka. "
                          f"Tera gusa ingano y'intego yawe ({round(plant_target_kg)}kg) kugirango wirinde kugwa kw'igiciro.")
         elif supply_ratio < 0.7:
             market_signal = "shortage_risk"
@@ -465,7 +463,7 @@ def forecast(crop_id):
                 "low_week":       low_week,
                 "peak_demand_kg": peak_demand_kg,
                 "avg_demand_kg":  avg_demand_kg,
-                "total_farmers":  intel["farmers"],
+                "avg_price":      round(float(np.mean(prices)) if len(prices) > 0 else 500, 1),
                 "signal":         market_signal,
                 "signal_en":      signal_en,
                 "signal_rw":      signal_rw,

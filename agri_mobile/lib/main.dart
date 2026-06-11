@@ -636,7 +636,7 @@ class UserSession {
     phone  = d['phone'] ?? '';
     role   = d['role'] ?? 'farmer';
     sector = d['sector'] ?? '';
-    farmSizeAcres = (d['farm_size_acres'] as num?)?.toDouble() ?? 1.0;
+    farmSizeAcres = double.tryParse(d['farm_size_acres'].toString()) ?? 1.0;
     loggedIn = true;
 
     if (token != null) {
@@ -748,7 +748,7 @@ class _LoginState extends State<LoginPage>
       }
     } catch (e) {
       setState(() {
-        _error = 'Cannot connect. Make sure the server is running.';
+        _error = 'Error: $e';
       });
       _shakeCtrl.forward(from: 0);
     }
@@ -2477,35 +2477,97 @@ class _PlantingAdviceSheet extends StatelessWidget {
             ]),
             const SizedBox(height: 20),
 
+            // ── HERO: Grow X kg + Expected Revenue ─────────────────
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [kForest, Color(0xFF1A6E1A)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
-              child: Column(children: [
-                Text(T.peakMarketDemand,
-                    style: const TextStyle(
-                        color: Color(0xFF89B889), fontSize: 12)),
-                const SizedBox(height: 4),
-                Text('${_fmtK(peakKg)} kg',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    T.rw ? 'Igice cyawe cyo gutera:' : 'Your growing target:',
+                    style: const TextStyle(color: Color(0xFF89B889), fontSize: 12),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${_fmtK(targetKg)} kg',
                     style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w900)),
-                Text('${T.peakWeekLabel} $peakWeek · $peakDate',
+                        fontSize: 38,
+                        fontWeight: FontWeight.w900,
+                        height: 1.0),
+                  ),
+                  Text(
+                    T.rw
+                        ? 'Tera $cropName uyu mwaka'
+                        : 'Grow $cropName this season',
                     style: const TextStyle(
-                        color: Color(0xFF89B889), fontSize: 12)),
-              ]),
+                        color: Color(0xFF89B889), fontSize: 13),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    height: 1,
+                    color: Colors.white.withValues(alpha: 0.15),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            T.rw ? 'Inyungu iteganijwe' : 'Expected income',
+                            style: const TextStyle(
+                                color: Color(0xFF89B889), fontSize: 11),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Rwf ${_fmtK((targetKg * (advice["avg_price"] as num? ?? 500)).round())}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.15)),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            T.rw ? 'Ibihe byiza kugurisha' : 'Best sell week',
+                            style: const TextStyle(
+                                color: Color(0xFF89B889), fontSize: 11),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Wk $peakWeek · $peakDate',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // ── Your farm info bar ──────────────────────────────────
+            // ── Farm stats bar (compact, no market share %) ─────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -2519,10 +2581,10 @@ class _PlantingAdviceSheet extends StatelessWidget {
                 children: [
                   _FarmStat('🏡', T.rw ? 'Inzara' : 'Farm',
                       '${farmSize.toStringAsFixed(1)} ac'),
-                  _FarmStat('📊', T.rw ? 'Igice' : 'Share',
-                      '${marketShare.toStringAsFixed(1)}%'),
-                  _FarmStat('🌾', T.rw ? 'Akari' : 'Needed',
+                  _FarmStat('🌾', T.rw ? 'Akare' : 'Acres needed',
                       '${requiredAcres.toStringAsFixed(2)} ac'),
+                  _FarmStat('📅', T.rw ? 'Ibyumweru' : 'Weeks left',
+                      '$weeksToPlant'),
                 ],
               ),
             ),
