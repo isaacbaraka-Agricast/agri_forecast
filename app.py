@@ -357,9 +357,11 @@ def forecast(crop_id):
         total_acres      = intel["farmers"] * AVG_FARM_SIZE
         market_share_pct = min(farm_size / total_acres, 1.0)
 
-        # Target = farmer share of peak demand + 20% post-harvest loss buffer
-        farmer_target_kg = round(peak_demand_kg * market_share_pct, 1)
-        farmer_target_kg = max(farmer_target_kg, 50)
+        # Target = farmer share of total seasonal demand (all forecast weeks)
+        # A farmer grows once per season, not once per week
+        total_seasonal_demand = sum(demands)
+        farmer_target_kg = round(total_seasonal_demand * market_share_pct, 1)
+        farmer_target_kg = max(farmer_target_kg, round(farm_size * intel["yield_kg"] * 0.1, 0))
         plant_target_kg  = round(farmer_target_kg * 1.20, 1)
 
         # Land and seed needed to hit that target
