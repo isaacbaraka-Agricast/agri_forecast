@@ -463,7 +463,7 @@ def forecast(crop_id):
                 "low_week":       low_week,
                 "peak_demand_kg": peak_demand_kg,
                 "avg_demand_kg":  avg_demand_kg,
-                "avg_price":      round(float(np.mean(prices)) if len(prices) > 0 else 500, 1),
+                "avg_price":      round(float(df["price_per_kg"].mean()) if len(df) > 0 else 500, 1),
                 "signal":         market_signal,
                 "signal_en":      signal_en,
                 "signal_rw":      signal_rw,
