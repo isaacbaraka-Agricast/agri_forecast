@@ -14,6 +14,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
+import 'dart:io';
+import 'package:http/io_client.dart';
+import 'dart:io';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
@@ -53,7 +57,7 @@ void main() {
 // =============================================================
 //  CONFIG & CONSTANTS
 // =============================================================
-const String _apiBase = 'https://agriforecast-production.up.railway.app';
+const String _apiBase = 'https://69.46.46.118';
   
 // =============================================================
 //  TRANSLATION ENGINE
@@ -195,6 +199,10 @@ CropInfo cropById(int id) => kCrops.firstWhere(
 //  API SERVICE
 // =============================================================
 class ApiService {
+  static http.Client get _client {
+    final hc = HttpClient()..badCertificateCallback = (cert, host, port) => true;
+    return IOClient(hc);
+  }
   static String? _token;
 
   static void setToken(String token) => _token = token;
