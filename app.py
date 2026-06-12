@@ -380,8 +380,12 @@ def forecast(crop_id):
         # Planting urgency
         if weeks_until_plant == 0:
             urgency    = "overdue"
-            urgency_en = f"Plant immediately or buy {crop_name} from market - growing window for this peak has passed"
-            urgency_rw = f"Tera {name_rw} ubu ako kanya cyangwa guze aho bihari - igihe cy'ubuhinzi cyarangiye"
+            next_plant_date  = plant_by_date + timedelta(weeks=26)
+            next_harvest_date = next_plant_date + timedelta(weeks=intel["grow_weeks"])
+            nps = next_plant_date.strftime("%d %b %Y")
+            nhs = next_harvest_date.strftime("%d %b %Y")
+            urgency_en = f"This season's window has passed. Next planting: {nps}. Expected harvest: {nhs}. Prepare your {required_acres:.2f} acres now."
+            urgency_rw = f"Igihe cy'uyu mwaka cyararenze. Gutera gukurikira: {nps}. Isarura riteganijwe: {nhs}. Tegura {required_acres:.2f} hegitari zawe ubu."
         elif weeks_until_plant <= 2:
             urgency    = "urgent"
             urgency_en = f"Urgent: Plant {crop_name} within {weeks_until_plant} week(s) to harvest in time for peak demand (Week {peak_week})"
