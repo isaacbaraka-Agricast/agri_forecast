@@ -1,0 +1,8 @@
+﻿f=open("C:/xampp/htdocs/agri_forecast/agri_mobile/lib/main.dart","r",encoding="utf-8")
+c=f.read()
+f.close()
+c=c.replace("69.46.46.118","agriforecast-production.up.railway.app")
+f=open("C:/xampp/htdocs/agri_forecast/agri_mobile/lib/main.dart","w",encoding="utf-8")
+f.write(c)
+f.close()
+print("DONE")

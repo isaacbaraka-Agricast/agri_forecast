@@ -57,7 +57,7 @@ void main() {
 // =============================================================
 //  CONFIG & CONSTANTS
 // =============================================================
-const String _apiBase = 'https://69.46.46.118';
+const String _apiBase = 'https://agriforecast-production.up.railway.app';
   
 // =============================================================
 //  TRANSLATION ENGINE
