@@ -174,19 +174,16 @@ const List<CropInfo> kCrops = [
 ];
 
 const List<Map<String, String>> kModels = [
-  {'value': 'arima',         'en': 'ARIMA — Statistical',    'rw': 'ARIMA'},
-  {'value': 'randomforest',  'en': 'Random Forest — ML',     'rw': "Ishyamba ry'Uburumbu"},
-  {'value': 'gradientboost', 'en': 'Gradient Boost — ML',    'rw': 'Gradient Boost'},
-  {'value': 'elasticnet',    'en': 'ElasticNet — Linear ML', 'rw': 'ElasticNet'},
-  {'value': 'ensemble',      'en': 'Ensemble — Best',        'rw': 'Ensemble (Nziza)'},
+  {'value': 'arima',        'en': 'ARIMA — Statistical',  'rw': 'ARIMA'},
+  {'value': 'randomforest', 'en': 'Random Forest — ML',   'rw': "Ishyamba ry'Uburumbu"},
+  {'value': 'lstm',         'en': 'LSTM — Deep Learning', 'rw': 'LSTM (Kwiga Igihe)'},
+  {'value': 'ensemble',     'en': 'Ensemble — Best',      'rw': 'Ensemble (Nziza)'},
 ];
-
 const Map<String, Color> kModelColors = {
-  'arima':         Color(0xFF1A6E1A),
-  'randomforest':  Color(0xFF2471A3),
-  'gradientboost': Color(0xFFD4A017),
-  'elasticnet':    Color(0xFF8E44AD),
-  'ensemble':      Color(0xFFC0392B),
+  'arima':        Color(0xFF1A6E1A),
+  'randomforest': Color(0xFF2471A3),
+  'lstm':         Color(0xFF8E44AD),
+  'ensemble':     Color(0xFFC0392B),
 };
 
 CropInfo cropById(int id) => kCrops.firstWhere(
@@ -646,12 +643,11 @@ class UserSession {
     }
   }
 
-  static void clear() {
-    name = phone = role = sector = '';
-    loggedIn = false;
-
-    ApiService.clearToken();
-  }
+  static Map<String,dynamic>? lastForecast;
+  static int? lastCropId;
+  static String? lastModel;
+  static void saveForecast(Map<String,dynamic> d,int cid,String m){lastForecast=d;lastCropId=cid;lastModel=m;}
+  static void clear(){name=phone=role=sector='';loggedIn=false;lastForecast=null;lastCropId=null;lastModel=null;ApiService.clearToken();}
 
   static String get roleEmoji => switch (role) {
         'buyer' => '🛒',
@@ -1152,7 +1148,7 @@ class _MainShellState extends State<MainShell> {   // ← already there
     super.initState();
     _pages = [
       const OverviewPage(),
-      ForecastPage(onResult: (d) => setState(() => lastForecastData = d)),
+      ForecastPage(onResult: (d) => setState(() { lastForecastData = d; UserSession.saveForecast(d, d["crop_id"] ?? 1, d["model"] ?? "ensemble"); })),
       PricePage(onResult: (d) => setState(() => lastPriceData = d)),
       const ComparePage(),
       const AlertsPage(),
@@ -1491,7 +1487,7 @@ class _MusanzeMapState extends State<_MusanzeMap> {
                       Text(
                         T.rw
                             ? 'Genda ku bifashisho byo guhanura kugira ngo ubone iteganiro ry\u2019isoko muri $_selectedSector'
-                            : 'Go to Forecast tab to see crop demand predictions for $_selectedSector sector',
+                            : 'Tap any crop on the Forecast tab to see demand predictions for $_selectedSector. Your sector: $_selectedSector',
                         style: const TextStyle(fontSize: 12, color: kMuted),
                       ),
                     ],
@@ -2126,7 +2122,7 @@ class _ForecastPageState extends State<ForecastPage> {
     setState(() { _loading = true; _error = null; _result = null; });
     try {
       final d = await ApiService.get(
-          '/forecast/$_cropId?model=$_model&weeks=$_weeks&farm_size=${UserSession.farmSizeAcres}');
+          '/forecast/$_cropId?model=$_model&weeks=$_weeks&farm_size=${UserSession.farmSizeAcres > 0 ? UserSession.farmSizeAcres : 1.0}');
       if (d['status'] != 'success') throw Exception(d['message']);
       setState(() { _result = d; _loading = false; });
       widget.onResult?.call(d);
@@ -3283,7 +3279,7 @@ class _ComparePageState extends State<ComparePage> {
           title: T.compare,
           subtitle: T.rw
               ? 'Gereranya indorerezi 5 zegeranya'
-              : 'Side-by-side comparison: ARIMA, RF, GB, ElasticNet & Ensemble',
+              : 'Compare all 4 models for your last forecasted crop',
           children: [
             _CropDropdown(
                 value: _cropId,
