@@ -14,6 +14,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:fl_chart/fl_chart.dart';
 // =============================================================
 // COLORS (must be AFTER imports)
@@ -1320,6 +1322,12 @@ const SizedBox(height: 16),
 _WeatherCard(),
 const SizedBox(height: 16),
 
+          // Musanze sectors map
+          _SectionHeader(T.rw ? 'Ikarita y\'Akarere ka Musanze' : 'Musanze District Map'),
+          const SizedBox(height: 10),
+          const _MusanzeMap(),
+          const SizedBox(height: 16),
+
           // KPI strip
           _loading
               ? const _LoadingCard()
@@ -1352,6 +1360,148 @@ const SizedBox(height: 16),
                 insights: _insights!['insights'] as List? ?? []),
         ],
       ),
+    );
+  }
+}
+
+
+// =============================================================
+//  MUSANZE DISTRICT MAP
+// =============================================================
+class _MusanzeMap extends StatefulWidget {
+  const _MusanzeMap();
+  @override
+  State<_MusanzeMap> createState() => _MusanzeMapState();
+}
+
+class _MusanzeMapState extends State<_MusanzeMap> {
+  String? _selectedSector;
+
+  static const _sectors = [
+    {'name': 'Muhoza',   'lat': -1.4986, 'lng': 29.6344},
+    {'name': 'Musanze',  'lat': -1.5100, 'lng': 29.6350},
+    {'name': 'Kinigi',   'lat': -1.4500, 'lng': 29.5800},
+    {'name': 'Busogo',   'lat': -1.5500, 'lng': 29.5900},
+    {'name': 'Cyuve',    'lat': -1.4200, 'lng': 29.6100},
+    {'name': 'Gacaca',   'lat': -1.5800, 'lng': 29.6600},
+    {'name': 'Gashaki',  'lat': -1.4800, 'lng': 29.7000},
+    {'name': 'Gataraga', 'lat': -1.5300, 'lng': 29.6700},
+    {'name': 'Kimonyi',  'lat': -1.5700, 'lng': 29.6200},
+    {'name': 'Muko',     'lat': -1.4300, 'lng': 29.6500},
+    {'name': 'Nyange',   'lat': -1.5400, 'lng': 29.5600},
+    {'name': 'Shingiro', 'lat': -1.4700, 'lng': 29.5500},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          height: 280,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: kBorder),
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: FlutterMap(
+            options: MapOptions(
+              initialCenter: const LatLng(-1.4986, 29.6344),
+              initialZoom: 11.5,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.example.agri_mobile',
+              ),
+              MarkerLayer(
+                markers: _sectors.map((s) {
+                  final isSelected = _selectedSector == s['name'];
+                  return Marker(
+                    point: LatLng(s['lat'] as double, s['lng'] as double),
+                    width: isSelected ? 120 : 90,
+                    height: isSelected ? 50 : 36,
+                    child: GestureDetector(
+                      onTap: () => setState(() =>
+                          _selectedSector = isSelected ? null : s['name'] as String),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected ? kForest : kSprout,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('📍', style: TextStyle(fontSize: 10)),
+                            const SizedBox(width: 3),
+                            Flexible(
+                              child: Text(
+                                s['name'] as String,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+        if (_selectedSector != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: kSprout.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kSprout.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                const Text('📍', style: TextStyle(fontSize: 22)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        T.rw ? 'Akagari: $_selectedSector' : 'Sector: $_selectedSector',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            color: kForest),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        T.rw
+                            ? 'Genda ku bifashisho byo guhanura kugira ngo ubone iteganiro ry\u2019isoko muri $_selectedSector'
+                            : 'Go to Forecast tab to see crop demand predictions for $_selectedSector sector',
+                        style: const TextStyle(fontSize: 12, color: kMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
