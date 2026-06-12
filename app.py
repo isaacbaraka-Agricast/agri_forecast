@@ -768,12 +768,14 @@ def compare_models(crop_id):
         series  = df['quantity_kg']
         steps   = int(request.args.get('weeks', 12))
 
+        train_series = series.iloc[:-steps]
+        actual_tail  = series.values[-steps:]
+
         results = {}
         for name, fn in [('ARIMA', run_arima), ('RandomForest', run_random_forest),
                          ('LSTM', run_lstm), ('Ensemble', ensemble_forecast)]:
-            raw, _ = fn(series, steps)
+            raw, _ = fn(train_series, steps)
             raw    = np.clip(raw, 0, None)
-            actual_tail = series.values[-steps:]
             model_pred  = raw[:len(actual_tail)]
             metrics     = compute_metrics(actual_tail, model_pred)
             results[name] = {
