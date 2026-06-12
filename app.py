@@ -361,7 +361,10 @@ def forecast(crop_id):
         # A farmer grows once per season, not once per week
         total_seasonal_demand = sum(demands)
         farmer_target_kg = round(total_seasonal_demand * market_share_pct, 1)
-        farmer_target_kg = max(farmer_target_kg, round(farm_size * intel["yield_kg"] * 0.1, 0))
+        # Floor: at least 30% of what the farm can produce, ceiling: 80% of farm capacity
+        farm_capacity    = farm_size * intel["yield_kg"]
+        farmer_target_kg = max(farmer_target_kg, round(farm_capacity * 0.30, 0))
+        farmer_target_kg = min(farmer_target_kg, round(farm_capacity * 0.80, 0))
         plant_target_kg  = round(farmer_target_kg * 1.20, 1)
 
         # Land and seed needed to hit that target
