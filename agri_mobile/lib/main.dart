@@ -15,6 +15,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
 import 'package:latlong2/latlong.dart';
 import 'package:fl_chart/fl_chart.dart';
 // =============================================================
@@ -4173,7 +4176,7 @@ class ReportsPage extends StatefulWidget {
 class _ReportsPageState extends State<ReportsPage> {
   bool _generating = false;
 
-  Future<void> _generatePdf() async {
+  Future<void> _generatePdf({bool share=false}) async {
     final forecastData = widget.getForecastData();
     final priceData    = widget.getPriceData();
 
@@ -4373,7 +4376,25 @@ class _ReportsPageState extends State<ReportsPage> {
         ],
       ));
 
-      await Printing.layoutPdf(onLayout: (format) async => pdf.save());
+      final bytes = await pdf.save();
+      if (share) {
+        final tmp = await getTemporaryDirectory();
+        final file = File('\${tmp.path}/AgriCast_Planting_Plan.pdf');
+        await file.writeAsBytes(bytes);
+        await Share.shareXFiles([XFile(file.path)], text: 'AgriCast Planting Plan - \${UserSession.name}');
+      } else {
+        // Save to downloads
+        final dir = await getExternalStorageDirectory();
+        final file = File('\${dir!.path}/AgriCast_Planting_Plan.pdf');
+        await file.writeAsBytes(bytes);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('PDF saved to \${file.path}'),
+            backgroundColor: kForest,
+            duration: const Duration(seconds: 4),
+          ));
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -4483,11 +4504,11 @@ class _ReportsPageState extends State<ReportsPage> {
         ),
         const SizedBox(height: 12),
 
-        // Generate button
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _generating ? null : _generatePdf,
+        // Download + Share buttons
+        Row(children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: _generating ? null : () => _generatePdf(share: false),
             icon: _generating
                 ? const SizedBox(width: 18, height: 18,
                     child: CircularProgressIndicator(
@@ -4495,11 +4516,24 @@ class _ReportsPageState extends State<ReportsPage> {
                 : const Icon(Icons.picture_as_pdf),
             label: Text(_generating ? T.generating : T.generatePdf),
             style: ElevatedButton.styleFrom(
-                backgroundColor: hasData ? kRed : kMuted,
+                backgroundColor: hasData ? kForest : kMuted,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16)),
           ),
-        ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: _generating ? null : () => _generatePdf(share: true),
+              icon: const Icon(Icons.share),
+              label: Text(T.rw ? 'Sangira' : 'Share'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: hasData ? kBlue : kMuted,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16)),
+            ),
+          ),
+        ]),
         const SizedBox(height: 16),
 
         // What goes in the PDF
