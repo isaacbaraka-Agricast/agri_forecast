@@ -3575,6 +3575,14 @@ class _AlertsPageState extends State<AlertsPage> {
   Map<String, dynamic>? _result;
   String? _error;
 
+  @override
+  void initState() {
+    super.initState();
+    // Auto-use last forecasted crop
+    if (UserSession.lastCropId != null) _cropId = UserSession.lastCropId!;
+    _fetch();
+  }
+
   Future<void> _fetch() async {
     setState(() { _loading = true; _error = null; _result = null; });
     try {
