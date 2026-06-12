@@ -16,7 +16,6 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:latlong2/latlong.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -3276,6 +3275,13 @@ class _ComparePageState extends State<ComparePage> {
   Map<String, dynamic>? _result;
   String? _error;
 
+  @override
+  void initState() {
+    super.initState();
+    if (UserSession.lastCropId != null) _cropId = UserSession.lastCropId!;
+    _fetch();
+  }
+
   Future<void> _fetch() async {
     setState(() { _loading = true; _error = null; _result = null; });
     try {
@@ -4378,10 +4384,7 @@ class _ReportsPageState extends State<ReportsPage> {
 
       final bytes = await pdf.save();
       if (share) {
-        final tmp = await getTemporaryDirectory();
-        final file = File('\${tmp.path}/AgriCast_Planting_Plan.pdf');
-        await file.writeAsBytes(bytes);
-        await Share.shareXFiles([XFile(file.path)], text: 'AgriCast Planting Plan - \${UserSession.name}');
+        await Printing.sharePdf(bytes: bytes, filename: 'AgriCast_Planting_Plan.pdf');
       } else {
         // Save to downloads
         final dir = await getExternalStorageDirectory();
