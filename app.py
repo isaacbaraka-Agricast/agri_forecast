@@ -18,7 +18,7 @@ import webbrowser
 import threading
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from datetime import datetime, timedelta
 
 warnings.filterwarnings("ignore")
@@ -200,7 +200,8 @@ def compute_metrics(actual, predicted):
     mae  = float(mean_absolute_error(actual, predicted))
     rmse = float(np.sqrt(mean_squared_error(actual, predicted)))
     mape = float(np.mean(np.abs((actual - predicted) / (actual + 1e-9))) * 100)
-    return {"MAE": round(mae, 2), "RMSE": round(rmse, 2), "MAPE": round(mape, 2)}
+    r2 = float(r2_score(actual, predicted))
+    return {"MAE": round(mae, 2), "RMSE": round(rmse, 2), "MAPE": round(mape, 2), "R2": round(r2, 4)}
 
 # =============================================================
 # ROUTES €” STATIC
@@ -773,8 +774,8 @@ def compare_models(crop_id):
             raw, _ = fn(series, steps)
             raw    = np.clip(raw, 0, None)
             actual_tail = series.values[-steps:]
-            naive_pred  = series.values[-steps - 1:-1]
-            metrics     = compute_metrics(actual_tail, naive_pred)
+            model_pred  = raw[:len(actual_tail)]
+            metrics     = compute_metrics(actual_tail, model_pred)
             results[name] = {
                 "forecast": [round(float(v), 1) for v in raw],
                 "metrics":  metrics
