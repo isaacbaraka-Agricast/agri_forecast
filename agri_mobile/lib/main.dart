@@ -4643,11 +4643,21 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? _status;
+  bool _editingFarm = false;
+  bool _saving = false;
+  late TextEditingController _farmCtrl;
 
   @override
   void initState() {
     super.initState();
+    _farmCtrl = TextEditingController(text: UserSession.farmSizeAcres.toStringAsFixed(1));
     _loadStatus();
+  }
+
+  @override
+  void dispose() {
+    _farmCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadStatus() async {
@@ -4655,6 +4665,37 @@ class _ProfilePageState extends State<ProfilePage> {
       final d = await ApiService.get('/api/status');
       if (mounted) setState(() => _status = d);
     } catch (_) {}
+  }
+
+  Future<void> _saveFarmSize() async {
+    final acres = double.tryParse(_farmCtrl.text);
+    if (acres == null || acres <= 0 || acres > 100) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(T.rw ? 'Injiza ingano y\'inzara iri hagati ya 0.1 na 100' : 'Enter farm size between 0.1 and 100 acres'),
+        backgroundColor: kRed,
+      ));
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final d = await ApiService.post('/profile/update', {'farm_size_acres': acres, 'sector': UserSession.sector});
+      if (d['status'] == 'success') {
+        UserSession.farmSizeAcres = acres;
+        setState(() { _editingFarm = false; _saving = false; });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(T.rw ? 'Inzara yahinduwe: ${acres.toStringAsFixed(1)} ac' : 'Farm size updated: ${acres.toStringAsFixed(1)} acres'),
+          backgroundColor: kForest,
+        ));
+      } else {
+        throw Exception(d['message']);
+      }
+    } catch (e) {
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('${T.error}: $e'),
+        backgroundColor: kRed,
+      ));
+    }
   }
 
   @override
@@ -4715,9 +4756,58 @@ class _ProfilePageState extends State<ProfilePage> {
                 _InfoRow(Icons.badge,      T.roleLbl,     UserSession.role.toUpperCase()),
                 if (UserSession.sector.isNotEmpty)
                   _InfoRow(Icons.location_on, T.sectorLbl, UserSession.sector),
-                _InfoRow(Icons.agriculture, T.rw ? 'Farm Size' : 'Farm Size', '${UserSession.farmSizeAcres.toStringAsFixed(1)} acres'),
+                _InfoRow(Icons.agriculture, T.rw ? 'Ingano y\'Inzara' : 'Farm Size', '${UserSession.farmSizeAcres.toStringAsFixed(1)} acres'),
               ],
             ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Farm size editor
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: kSprout.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: kSprout.withValues(alpha: 0.25)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                const Icon(Icons.edit, size: 16, color: kForest),
+                const SizedBox(width: 6),
+                Text(T.rw ? 'Hindura Ingano y\'Inzara' : 'Update Farm Size',
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: kForest)),
+              ]),
+              const SizedBox(height: 12),
+              Row(children: [
+                Expanded(
+                  child: TextField(
+                    controller: _farmCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: T.rw ? 'Ingano (hectare)' : 'Size (acres)',
+                      suffixText: T.rw ? 'ac' : 'acres',
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: _saving ? null : _saveFarmSize,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kForest,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  ),
+                  child: _saving
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : Text(T.rw ? 'Bika' : 'Save'),
+                ),
+              ]),
+            ],
           ),
         ),
         const SizedBox(height: 12),
