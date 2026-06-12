@@ -1372,6 +1372,16 @@ class _MusanzeMap extends StatefulWidget {
 
 class _MusanzeMapState extends State<_MusanzeMap> {
   String? _selectedSector;
+  Map<String,dynamic>? _sectorData;
+  bool _sectorLoading = false;
+
+  Future<void> _loadSector(String name) async {
+    setState(() { _sectorLoading = true; _sectorData = null; });
+    try {
+      final d = await ApiService.get('/sector/$name');
+      setState(() { _sectorData = d; _sectorLoading = false; });
+    } catch(_) { setState(() => _sectorLoading = false); }
+  }
 
   static const _sectors = [
     {'name': 'Muhoza',   'lat': -1.4986, 'lng': 29.6344},
@@ -1417,8 +1427,11 @@ class _MusanzeMapState extends State<_MusanzeMap> {
                     width: isSelected ? 120 : 90,
                     height: isSelected ? 50 : 36,
                     child: GestureDetector(
-                      onTap: () => setState(() =>
-                          _selectedSector = isSelected ? null : s['name'] as String),
+                      onTap: () {
+                        final n = s['name'] as String;
+                        setState(() => _selectedSector = isSelected ? null : n);
+                        if (!isSelected) _loadSector(n);
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -1468,33 +1481,37 @@ class _MusanzeMapState extends State<_MusanzeMap> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: kSprout.withValues(alpha: 0.25)),
             ),
-            child: Row(
-              children: [
-                const Text('📍', style: TextStyle(fontSize: 22)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
+            child: _sectorLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _sectorData == null
+                ? Text('Sector: $_selectedSector', style: const TextStyle(fontWeight: FontWeight.w700, color: kForest))
+                : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        T.rw ? 'Akagari: $_selectedSector' : 'Sector: $_selectedSector',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                            color: kForest),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        T.rw
-                            ? 'Genda ku bifashisho byo guhanura kugira ngo ubone iteganiro ry\u2019isoko muri $_selectedSector'
-                            : 'Tap any crop on the Forecast tab to see demand predictions for $_selectedSector. Your sector: $_selectedSector',
-                        style: const TextStyle(fontSize: 12, color: kMuted),
-                      ),
+                      Row(children: [
+                        const Text('📍', style: TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text('$_selectedSector • ${_sectorData!["zone"]}',
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kForest))),
+                      ]),
+                      const SizedBox(height: 8),
+                      Text(T.rw ? 'Ibihingwa byiza:' : 'Best crops here:',
+                          style: const TextStyle(fontSize: 11, color: kMuted)),
+                      const SizedBox(height: 4),
+                      Wrap(spacing: 6, children: [
+                        for (final crop in (_sectorData!["best_crops"] as List))
+                          Chip(
+                            label: Text(crop.toString(), style: const TextStyle(fontSize: 11, color: Colors.white)),
+                            backgroundColor: kForest,
+                            padding: EdgeInsets.zero,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                      ]),
+                      const SizedBox(height: 8),
+                      Text(T.rw ? _sectorData!["tip_rw"] : _sectorData!["tip_en"],
+                          style: const TextStyle(fontSize: 12, color: kMuted)),
                     ],
                   ),
-                ),
-              ],
-            ),
           ),
         ],
       ],
