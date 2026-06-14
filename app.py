@@ -368,6 +368,7 @@ def forecast(crop_id):
                 "demand_bags": round(demand / bag_kg, 1),
                 "lower_kg":    round(float(max(ci[0], 0)), 1),
                 "upper_kg":    round(float(max(ci[1], 0)), 1),
+                "season":      "A" if week_date.month in [9,10,11,12,1,2] else ("B" if week_date.month in [3,4,5] else "C"),
             })
 
         demands        = [f["demand_kg"] for f in forecast_list]
