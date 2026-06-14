@@ -117,7 +117,7 @@ def _generate_synthetic_data(crop_id):
 
 def run_arima(series, steps=12):
     """ARIMA(2,1,1) -- AutoRegressive Integrated Moving Average."""
-    model  = ARIMA(series, order=(2, 1, 1))
+    model  = ARIMA(series, order=(1, 1, 1))
     fitted = model.fit()
     fc     = fitted.forecast(steps=steps)
     conf   = fitted.get_forecast(steps=steps).conf_int(alpha=0.20)
