@@ -94,7 +94,7 @@ def _generate_synthetic_data(crop_id):
     and a gentle upward price trend.
     """
     np.random.seed(crop_id * 7)
-    weeks = 156  # 3 years
+    weeks = 180  # 3 years
     idx = pd.date_range(end=datetime.today(), periods=weeks, freq='W')
 
     # Seasonal demand multiplier: peaks around harvest (Jun, Jul, Jan)
@@ -107,7 +107,7 @@ def _generate_synthetic_data(crop_id):
 
     qty   = (base_qty   * season + np.random.normal(0, base_qty * 0.05, weeks)).clip(500)
     price = (base_price * season + np.random.normal(0, base_price * 0.04, weeks) +
-             np.linspace(0, base_price * 0.15, weeks)).clip(50)
+             np.linspace(0, base_price * 0.03, weeks)).clip(50)
 
     return pd.DataFrame({'quantity_kg': qty, 'price_per_kg': price}, index=idx)
 
