@@ -83,11 +83,13 @@ def load_crop_data(crop_id, district_id=1):
         df.set_index('recorded_date', inplace=True)
         if len(df) < 10:
             raise ValueError("Insufficient data")
-        # Resample to weekly frequency, forward-fill gaps
         df = df.resample('W').mean().interpolate(method='linear')
         return df
     except Exception:
         return _generate_synthetic_data(crop_id)
+
+def _generate_synthetic_data(crop_id):
+    """
     Generate realistic synthetic weekly data for a Musanze crop.
     Includes seasonal patterns (two rainy seasons: Mar-May, Oct-Dec)
     and a gentle upward price trend.
