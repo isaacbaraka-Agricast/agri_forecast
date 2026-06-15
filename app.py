@@ -1009,11 +1009,11 @@ def upload_data():
         inserted = 0
         for r in records:
             cur.execute("""
-                INSERT INTO market_prices (crop_id, recorded_at, price_per_kg, quantity_kg)
-                VALUES (%s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE price_per_kg=%s, quantity_kg=%s
-            """, (r['crop_id'], r['date'], r['price'], r['volume'],
-                  r['price'], r['volume']))
+                INSERT INTO market_prices (crop_id, district_id, recorded_date, price_per_kg, quantity_kg)
+VALUES (%s, 1, %s, %s, %s)
+ON DUPLICATE KEY UPDATE price_per_kg=%s, quantity_kg=%s
+""", (r['crop_id'], r['date'], r['price'], r['volume'],
+      r['price'], r['volume']))
             inserted += 1
         db.commit()
         cur.close(); db.close()
