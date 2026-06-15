@@ -349,7 +349,7 @@ def forecast(crop_id):
 
         intel      = CROP_INTEL.get(crop_id, CROP_INTEL[1])
         crop_name  = CROPS.get(crop_id, f"Crop {crop_id}")
-        name_rw    = intel["name_rw"
+        name_rw    = intel["name_rw"]
         grow_weeks = intel["grow_weeks"]
         bag_kg     = intel["bag_kg"]
 
