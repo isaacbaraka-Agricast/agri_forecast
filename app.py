@@ -111,9 +111,9 @@ def _generate_synthetic_data(crop_id):
 
     return pd.DataFrame({'quantity_kg': qty, 'price_per_kg': price}, index=idx)
 
-# =============================================================
-# FORECASTING MODELS
-# =============================================================
+
+#FORECASTING MODELS
+
 
 def run_arima(series, steps=12):
     """ARIMA(2,1,1) -- AutoRegressive Integrated Moving Average."""
@@ -349,7 +349,7 @@ def forecast(crop_id):
 
         intel      = CROP_INTEL.get(crop_id, CROP_INTEL[1])
         crop_name  = CROPS.get(crop_id, f"Crop {crop_id}")
-        name_rw    = intel["name_rw"]
+        name_rw    = intel["name_rw"
         grow_weeks = intel["grow_weeks"]
         bag_kg     = intel["bag_kg"]
 
@@ -997,6 +997,29 @@ def test_alerts():
 # =============================================================
 # ROUTES -- ADMIN: seed database
 # =============================================================
+@app.route('/admin/upload_data', methods=['POST'])
+def upload_data():
+    try:
+        data    = request.get_json() or {}
+        records = data.get('records', [])
+        if not records:
+            return jsonify({"status": "error", "message": "No records provided"}), 400
+        db  = get_db()
+        cur = db.cursor()
+        inserted = 0
+        for r in records:
+            cur.execute("""
+                INSERT INTO market_prices (crop_id, recorded_at, price_per_kg, quantity_kg)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE price_per_kg=%s, quantity_kg=%s
+            """, (r['crop_id'], r['date'], r['price'], r['volume'],
+                  r['price'], r['volume']))
+            inserted += 1
+        db.commit()
+        cur.close(); db.close()
+        return jsonify({"status": "success", "inserted": inserted})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 @app.route('/admin/init_db', methods=['POST'])
 def init_db():
     """Create all required tables and seed basic data."""
