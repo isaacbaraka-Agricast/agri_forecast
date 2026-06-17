@@ -390,7 +390,6 @@ def forecast(crop_id):
         farmer_target_kg = round(total_seasonal_demand * market_share_pct, 1)
         # Floor: at least 30% of what the farm can produce, ceiling: 80% of farm capacity
         farm_capacity    = farm_size * intel["yield_kg"]
-        farmer_target_kg = max(farmer_target_kg, round(farm_capacity * 0.30, 0))
         farmer_target_kg = min(farmer_target_kg, round(farm_capacity * 0.80, 0))
         plant_target_kg  = round(farmer_target_kg * 1.20, 1)
 
