@@ -231,6 +231,9 @@ def sector_info(name):
     return jsonify({"status":"success","sector":name,"zone":intel["zone"],
                     "best_crops":intel["best_crops"],"tip_en":intel["tip_en"],"tip_rw":intel["tip_rw"]})
 
+
+
+
 @app.route('/')
 def home():
     try:
@@ -1161,13 +1164,6 @@ def reset_password():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-if __name__ == '__main__':
-    def open_browser():
-        webbrowser.open('http://127.0.0.1:5000')
-    threading.Timer(1.5, open_browser).start()
-    app.run(debug=False, host='0.0.0.0', port=5000, use_reloader=False)
-
- 
 @app.route('/profile/update', methods=['POST'])
 def update_profile():
     try:
@@ -1198,3 +1194,10 @@ def update_profile():
         return jsonify({"status":"error","message":str(e)}), 500
 
 
+if __name__ == '__main__':
+    def open_browser():
+        webbrowser.open('http://127.0.0.1:5000')
+    threading.Timer(1.5, open_browser).start()
+    app.run(debug=False, host='0.0.0.0', port=5000, use_reloader=False)
+
+ 
