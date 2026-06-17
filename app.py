@@ -1169,8 +1169,14 @@ if __name__ == '__main__':
 
  
 @app.route('/profile/update', methods=['POST'])
-@token_required
-def update_profile(current_user):
+def update_profile():
+    try:
+        auth = request.headers.get('Authorization', '')
+        token = auth.replace('Bearer ', '').strip()
+        if not token:
+            return jsonify({"status": "error", "message": "Token required"}), 401
+        payload = jwt.decode(token, 'agri_forecast_secret_key', algorithms=['HS256'])
+        user_id = payload.get('user_id')
     try:
         data = request.get_json()
         farm_size = float(data.get('farm_size_acres', 1.0))
@@ -1182,7 +1188,7 @@ def update_profile(current_user):
         if sector:
             updates.append("sector = %s")
             params.append(sector)
-        params.append(current_user['id'])
+        params.append(user_id)
         db = get_db()
         cursor = db.cursor()
         cursor.execute(f"UPDATE users SET {', '.join(updates)} WHERE id = %s", params)

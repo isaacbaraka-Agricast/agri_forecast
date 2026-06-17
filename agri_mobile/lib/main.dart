@@ -922,11 +922,18 @@ class _LoginState extends State<LoginPage>
                                   ),
                           ),
 
-                          const SizedBox(height: 14),
-
-                          Center(
-                            child: TextButton(
-                              onPressed: () => Navigator.push(
+                          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: () {},
+              child: const Text('Forgot Password? Contact your admin',
+                style: TextStyle(color: Colors.grey, fontSize: 12)),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => const RegisterPage(),
@@ -1631,7 +1638,7 @@ class _KpiStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      {'icon': '🌱', 'val': '${status["crops"] ?? 7}',          'lbl': T.rw ? 'Ibihingwa' : 'Crops'},
+      {'icon': '🌱', 'val': '${(status["crops"] as List?)?.length ?? 7}',          'lbl': T.rw ? 'Ibihingwa' : 'Crops'},
       {'icon': '🤖', 'val': '5',                                  'lbl': T.rw ? 'Indorerezi' : 'Models'},
       {'icon': '🗺️', 'val': '${status["sectors"] ?? 5}',         'lbl': T.rw ? 'Inzego' : 'Sectors'},
       {'icon': '📦', 'val': fmtNum(status["db_records"] ?? 0),   'lbl': T.rw ? 'Amakuru' : 'Records'},
@@ -2417,8 +2424,8 @@ class _ForecastResultView extends StatelessWidget {
                   children: [
                     _MetricChip('MAE',  fmtNum((metrics['MAE'] as num?)?.toDouble() ?? 0),  Colors.orange),
                     _MetricChip('RMSE', fmtNum((metrics['RMSE'] as num?)?.toDouble() ?? 0), kBlue),
-                    _MetricChip('MAPE', '${metrics['MAPE']}%', Colors.purple),
-                    _MetricChip('R²',   '${metrics['R2'] ?? 'N/A'}',    kSprout),
+                    _MetricChip('Accuracy', '${(100 - ((metrics['MAPE'] as num?) ?? 0)).toStringAsFixed(1)}%', Colors.green),
+                  
                   ],
                 ),
               ],
@@ -3125,7 +3132,7 @@ class _PriceResultView extends StatelessWidget {
                   style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 15, color: kForest)),
-              Text('RWF/kg · ${data["weeks"]}-week outlook',
+              Text('RWF/kg · ${data["weeks"] ?? 12}-week outlook',
                   style: const TextStyle(fontSize: 11, color: kMuted)),
               const SizedBox(height: 14),
               SizedBox(
@@ -3428,7 +3435,7 @@ class _ComparePageState extends State<ComparePage> {
                 height: 240,
                 child: LineChart(LineChartData(
                   lineBarsData: datasets,
-                  minY: 0,
+                  minY: 3000,
                   maxY: maxY * 1.1,
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(sideTitles: SideTitles(
@@ -3492,7 +3499,7 @@ class _ComparePageState extends State<ComparePage> {
                     const SizedBox(width: 8),
                     SizedBox(
                       width: 80,
-                      child: Text(name.toUpperCase(),
+                      child: Text(name == 'RandomForest' ? 'Random Forest' : name.toUpperCase(),
                           style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -3552,8 +3559,8 @@ class _ComparePageState extends State<ComparePage> {
                     DataColumn(label: Text('Model')),
                     DataColumn(label: Text('MAE')),
                     DataColumn(label: Text('RMSE')),
-                    DataColumn(label: Text('MAPE%')),
-                    DataColumn(label: Text('R²')),
+                    DataColumn(label: Text('Accuracy')),
+                    DataColumn(label: Text('Accuracy')),
                     DataColumn(label: Text('Rank')),
                   ],
                   rows: ranked.asMap().entries.map((e) {
@@ -3564,7 +3571,7 @@ class _ComparePageState extends State<ComparePage> {
                       color: WidgetStateProperty.all(
                           best ? kSkyPale : null),
                       cells: [
-                        DataCell(Text(name.toUpperCase(),
+                        DataCell(Text(name == 'RandomForest' ? 'Random Forest' : name.toUpperCase(),
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: kModelColors[name] ?? kLeaf,
@@ -3573,12 +3580,12 @@ class _ComparePageState extends State<ComparePage> {
                             fmtNum((m['MAE'] as num?)?.toDouble() ?? 0))),
                         DataCell(Text(
                             fmtNum((m['RMSE'] as num?)?.toDouble() ?? 0))),
-                        DataCell(Text('${m["MAPE"]}%',
+                        DataCell(Text('${(100 - ((m["MAPE"] as num?) ?? 0)).toStringAsFixed(1)}%',
                             style: TextStyle(
                                 color: best ? kSprout : kText,
                                 fontWeight: best
                                     ? FontWeight.w700 : FontWeight.normal))),
-                        DataCell(Text('${m["R2"]}')),
+                        DataCell(Text('\%')),
                         DataCell(Text(_medals[e.key],
                             style: const TextStyle(fontSize: 16))),
                       ],
@@ -4070,7 +4077,7 @@ class _SeasonBadge extends StatelessWidget {
       color: seasonColor(season).withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(8),
     ),
-    child: Text('S$season',
+    child: Text('$season',
         style: TextStyle(
             color: seasonColor(season),
             fontSize: 10,
@@ -4288,7 +4295,7 @@ class _ReportsPageState extends State<ReportsPage> {
                         '${row["lower_kg"]}',
                         '${row["upper_kg"]}',
                         '${row["demand_bags"] ?? "-"}',
-                        'S${row["season"] ?? "A"}',
+                        '',
                       ]
                           .map((cell) => pw.Padding(
                                 padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -4564,7 +4571,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     _ReportItem('💰', T.priceTable,
                         '$cropName · RWF/kg · $model'),
                   _ReportItem('💡', T.seasonAdvice, T.farmerTips),
-                  _ReportItem('📐', T.modelMetrics, 'MAE · RMSE · MAPE · R²'),
+                  _ReportItem('📐', T.modelMetrics, 'MAE · RMSE · Accuracy'),
                 ],
               ),
             ),
