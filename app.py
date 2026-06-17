@@ -1177,7 +1177,6 @@ def update_profile():
             return jsonify({"status": "error", "message": "Token required"}), 401
         payload = jwt.decode(token, 'agri_forecast_secret_key', algorithms=['HS256'])
         user_id = payload.get('user_id')
-    try:
         data = request.get_json()
         farm_size = float(data.get('farm_size_acres', 1.0))
         sector    = data.get('sector', '').strip()
