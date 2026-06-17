@@ -1186,7 +1186,7 @@ def update_profile():
         params.append(user_id)
         db = get_db()
         cursor = db.cursor()
-        cursor.execute(f"UPDATE users SET {', '.join(updates)} WHERE id = %s", params)
+        cursor.execute(f"UPDATE users SET {', '.join(updates)} WHERE user_id = %s", params)
         db.commit()
         cursor.close()
         return jsonify({"status":"success","message":"Profile updated","farm_size_acres":farm_size,"sector":sector})
