@@ -866,7 +866,7 @@ def compare_models(crop_id):
             "best_model":        best_model,
             "best_mape":         best_mape,
             "recommendation_en": f"{best_model} is the most accurate model for {CROPS.get(crop_id, 'this crop')} with MAPE of {best_mape:.1f}%",
-            "recommendation_rw": f"{best_model} ni indorerezi nziza kuruta izindi kuri {CROPS.get(crop_id, 'iri shyamba')} ifite MAPE ya {best_mape:.1f}%"
+            "recommendation_rw": f"{best_model} ni indorerezi nziza kuruta izindi kuri {(lambda n:{1:'Ibirayi',2:'Ibigori',3:'Ibishyimbo',4:'Inyanya',5:'Isorgho',6:'Ingano',7:'Umuneke'}.get(n,'iri shyamba'))(crop_id)} ifite MAPE ya {best_mape:.1f}%"
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
