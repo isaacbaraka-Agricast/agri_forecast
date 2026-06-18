@@ -472,10 +472,10 @@ def forecast(crop_id):
             trend_rw = (f"Impamvu y'iri teganyabikorwa: Ibisabwa bya {name_rw} biringaniye hafi ya {round(avg_demand_kg/1000,1)}t/icyumweru. "
                         f"Imiterere y'isoko muri Musanze ihuye n'imigenzo ya kera y'ibihe.")
 
-        # Metrics: each model back-predicts last 8 weeks vs actual (smoothed)
-        actual_tail  = series.rolling(2, min_periods=1).mean().values[-8:]
-        back_raw, _  = fn(series[:-8], 8)
-        back_pred    = np.clip(back_raw, 0, None)[:8]
+        # Metrics: back-predict last 12 weeks vs actual (same as Compare tab)
+        actual_tail  = series.values[-12:]
+        back_raw, _  = fn(series[:-12], 12)
+        back_pred    = np.clip(back_raw, 0, None)[:12]
         min_len      = min(len(actual_tail), len(back_pred))
         metrics      = compute_metrics(actual_tail[:min_len], back_pred[:min_len])
         metrics["mae_label_en"]  = "Mean Absolute Error"
@@ -813,13 +813,14 @@ def compare_models(crop_id):
         series  = df['quantity_kg']
         steps   = int(request.args.get('weeks', 12))
 
-        train_series = series.iloc[:-steps]
-        actual_tail  = series.values[-steps:]
+        eval_weeks   = 8
+        train_series = series.iloc[:-eval_weeks]
+        actual_tail  = series.rolling(2, min_periods=1).mean().values[-eval_weeks:]
 
         results = {}
         for name, fn in [('ARIMA', run_arima), ('RandomForest', run_random_forest),
                          ('LSTM', run_lstm), ('Ensemble', ensemble_forecast)]:
-            raw, _ = fn(train_series, steps)
+            raw, _ = fn(train_series, eval_weeks)
             raw    = np.clip(raw, 0, None)
             model_pred  = raw[:len(actual_tail)]
             metrics     = compute_metrics(actual_tail, model_pred)
