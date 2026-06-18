@@ -813,9 +813,9 @@ def compare_models(crop_id):
         series  = df['quantity_kg']
         steps   = int(request.args.get('weeks', 12))
 
-        eval_weeks   = 8
+        eval_weeks   = 12
         train_series = series.iloc[:-eval_weeks]
-        actual_tail  = series.rolling(2, min_periods=1).mean().values[-eval_weeks:]
+        actual_tail  = series.values[-eval_weeks:]
 
         results = {}
         for name, fn in [('ARIMA', run_arima), ('RandomForest', run_random_forest),
