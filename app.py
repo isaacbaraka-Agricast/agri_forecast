@@ -637,22 +637,23 @@ def alerts_all():
                 avg_prev = float(np.mean(prev)) if len(prev) >= 12 else avg_recent
                 trend_ratio = avg_recent / avg_prev if avg_prev > 0 else 1.0
                 crop_name = crop_names.get(crop_id, f'Crop {crop_id}')
+                crop_name_rw = intel.get('name_rw', crop_name)
                 if trend_ratio > 1.15:
                     all_alerts.append({
                         'crop_id': crop_id,
                         'title_en': f'{crop_name} Shortage Opportunity',
-                        'title_rw': f'Amahirwe y\'ibura: {crop_name}',
+                        'title_rw': f'Amahirwe y\'ibura: {crop_name_rw}',
                         'message_en': f'Demand for {crop_name} is rising (+{round((trend_ratio-1)*100,1)}% vs last season). Consider growing more.',
-                        'message_rw': f'Ibisabwa bya {crop_name} biriyongera (+{round((trend_ratio-1)*100,1)}%). Tekereza gutera byinshi.',
+                        'message_rw': f'Ibisabwa bya {crop_name_rw} biriyongera (+{round((trend_ratio-1)*100,1)}%). Tekereza gutera byinshi.',
                         'severity': 'info'
                     })
                 elif trend_ratio < 0.85:
                     all_alerts.append({
                         'crop_id': crop_id,
                         'title_en': f'{crop_name} Oversupply Risk',
-                        'title_rw': f'Ingorane y\'umusaruro mwinshi: {crop_name}',
+                        'title_rw': f'Ingorane y\'umusaruro mwinshi: {crop_name_rw}',
                         'message_en': f'Demand for {crop_name} is falling ({round((1-trend_ratio)*100,1)}% vs last season). Grow only your target to protect your price.',
-                        'message_rw': f'Ibisabwa bya {crop_name} biragwa ({round((1-trend_ratio)*100,1)}%). Tera gusa ingano y\'intego yawe.',
+                        'message_rw': f'Ibisabwa bya {crop_name_rw} biragwa ({round((1-trend_ratio)*100,1)}%). Tera gusa ingano y\'intego yawe.',
                         'severity': 'warning'
                     })
             except:
