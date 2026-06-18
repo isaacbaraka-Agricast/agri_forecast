@@ -281,21 +281,18 @@ String fmtFull(num v) {
 String seasonLabel(String s) => switch (s) {
   'A' => T.seasonA,
   'B' => T.seasonB,
-  'C' => T.seasonC,
-  _   => 'Unknown',
+  _   => T.seasonB,
 };
 
 Color seasonColor(String s) => switch (s) {
   'A' => kLeaf,
   'B' => kStraw,
-  'C' => kRed,
-  _   => kMuted,
+  _   => kStraw,
 };
 
 String _season(int month) {
   if (month >= 9 || month <= 2) return 'A';
-  if (month <= 6) return 'B';
-  return 'C';
+  return 'B';
 }
 
 // =============================================================
