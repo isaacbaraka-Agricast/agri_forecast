@@ -611,7 +611,7 @@ def price_forecast(crop_id):
                 "peak_price":        max_price,                           # † Flutter reads this
                 "tip_en": f"Best time to sell {crop_name} is Week {best_week} "
                           f"when price peaks at {max_price} RWF/kg.",
-                "tip_rw": f"Igihe cyiza cyo kugurisha {intel["name_rw"]} ni icyumweru cya {best_week} "
+                "tip_rw": f"Igihe cyiza cyo kugurisha {intel['name_rw']} ni icyumweru cya {best_week} "
                           f"igiciro kigera ku {max_price} RWF/kg.",
             }
         })
