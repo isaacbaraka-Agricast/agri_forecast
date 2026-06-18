@@ -2146,7 +2146,7 @@ class ForecastPage extends StatefulWidget {
 
 class _ForecastPageState extends State<ForecastPage> {
   int    _cropId = 1;
-  String _model  = 'ensemble';
+  String _model  = 'auto';
   int    _weeks  = 12;
   bool   _loading = false;
   Map<String, dynamic>? _result;

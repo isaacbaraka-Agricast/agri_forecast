@@ -426,7 +426,13 @@ def forecast(crop_id):
         # Planting urgency
         if weeks_until_plant == 0:
             urgency    = "overdue"
-            next_plant_date  = plant_by_date + timedelta(weeks=26)
+            # Calculate next season from TODAY, not from missed date
+            today = datetime.today()
+            # Musanze Season A: plant Sep-Oct, Season B: plant Mar-Apr
+            if today.month < 9:
+                next_plant_date = today.replace(month=9, day=1)
+            else:
+                next_plant_date = today.replace(year=today.year+1, month=3, day=1)
             next_harvest_date = next_plant_date + timedelta(weeks=intel["grow_weeks"])
             nps = next_plant_date.strftime("%d %b %Y")
             nhs = next_harvest_date.strftime("%d %b %Y")
