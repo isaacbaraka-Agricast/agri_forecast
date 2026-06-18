@@ -132,7 +132,7 @@ static String get reportsBanner    => s('Generate PDF forecast & price reports',
   static String get marketSnap    => s('Market Snapshot',            "Amakuru y'Isoko");
   static String get overview      => s('Overview',                   'Ahabanza');
   static String get seasonA       => s('Season A · Sep–Feb',         'Igihe A · Nzeri–Gashyantare');
-  static String get seasonB       => s('Season B · Mar–Jun',         'Igihe B · Werurwe–Kamena');
+  static String get seasonB       => s('Season B · Mar–Aug',         'Igihe B · Werurwe–Kanama');
   static String get seasonC       => s('Season C · Jul–Aug',         'Igihe C · Nyakanga–Kanama');
   static String get plantingReco     => s('Planting Recommendation',        'Inama yo Gutera');
 static String get peakMarketDemand => s('Peak Market Demand',             'Isoko Rinini Ryiteganywa');
@@ -183,7 +183,7 @@ const List<Map<String, String>> kModels = [
   {'value': 'arima',        'en': 'ARIMA — Statistical',  'rw': 'ARIMA'},
   {'value': 'randomforest', 'en': 'Random Forest — ML',   'rw': "Ishyamba ry'Uburumbu"},
   {'value': 'lstm',         'en': 'LSTM — Deep Learning', 'rw': 'LSTM (Kwiga Igihe)'},
-  {'value': 'ensemble',     'en': 'Ensemble — Best',      'rw': 'Ensemble (Nziza)'},
+  {'value': 'ensemble',     'en': 'Ensemble',             'rw': 'Ensemble'},
 ];
 const Map<String, Color> kModelColors = {
   'arima':        Color(0xFF1A6E1A),
@@ -1639,7 +1639,7 @@ class _KpiStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       {'icon': '🌱', 'val': '${(status["crops"] as List?)?.length ?? 7}',          'lbl': T.rw ? 'Ibihingwa' : 'Crops'},
-      {'icon': '🤖', 'val': '5',                                  'lbl': T.rw ? 'Indorerezi' : 'Models'},
+      {'icon': '🤖', 'val': '4',                                  'lbl': T.rw ? 'Indorerezi' : 'Models'},
       {'icon': '🗺️', 'val': '${status["sectors"] ?? 5}',         'lbl': T.rw ? 'Inzego' : 'Sectors'},
       {'icon': '📦', 'val': fmtNum(status["db_records"] ?? 0),   'lbl': T.rw ? 'Amakuru' : 'Records'},
     ];
@@ -2146,7 +2146,7 @@ class ForecastPage extends StatefulWidget {
 
 class _ForecastPageState extends State<ForecastPage> {
   int    _cropId = 1;
-  String _model  = 'auto';
+  String _model  = 'ensemble';
   int    _weeks  = 12;
   bool   _loading = false;
   Map<String, dynamic>? _result;

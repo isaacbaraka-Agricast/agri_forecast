@@ -421,7 +421,13 @@ def forecast(crop_id):
         # WHEN to plant: work backwards from peak demand week minus growing cycle
         peak_date         = start_date + timedelta(weeks=peak_week)
         plant_by_date     = peak_date - timedelta(weeks=grow_weeks)
-        weeks_until_plant = max(0, (plant_by_date - start_date).days // 7)
+        # Use next season date if plant_by_date already passed
+        today = datetime.today()
+        if plant_by_date < today.date() if hasattr(today, 'date') else plant_by_date < today:
+            next_plant = today.replace(month=9, day=1) if today.month < 9 else today.replace(year=today.year+1, month=3, day=1)
+            weeks_until_plant = max(0, (next_plant.date() - today.date()).days // 7)
+        else:
+            weeks_until_plant = max(0, (plant_by_date - start_date).days // 7)
 
         # Planting urgency
         if weeks_until_plant == 0:
