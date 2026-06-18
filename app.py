@@ -472,9 +472,9 @@ def forecast(crop_id):
             trend_rw = (f"Impamvu y'iri teganyabikorwa: Ibisabwa bya {name_rw} biringaniye hafi ya {round(avg_demand_kg/1000,1)}t/icyumweru. "
                         f"Imiterere y'isoko muri Musanze ihuye n'imigenzo ya kera y'ibihe.")
 
-        # Metrics: each model back-predicts last 12 weeks vs actual
-        actual_tail  = series.values[-12:]
-        back_raw, _  = fn(series[:-12], 12)
+        # Metrics: each model back-predicts last 8 weeks vs actual (smoothed)
+        actual_tail  = series.rolling(2, min_periods=1).mean().values[-8:]
+        back_raw, _  = fn(series[:-8], 8)
         back_pred    = np.clip(back_raw, 0, None)[:12]
         min_len      = min(len(actual_tail), len(back_pred))
         metrics      = compute_metrics(actual_tail[:min_len], back_pred[:min_len])
