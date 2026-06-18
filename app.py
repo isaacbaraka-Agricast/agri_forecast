@@ -423,6 +423,7 @@ def forecast(crop_id):
         plant_by_date     = peak_date - timedelta(weeks=grow_weeks)
         # Use next season date if plant_by_date already passed
         today = datetime.today().date()
+        plant_by_date = plant_by_date.date() if hasattr(plant_by_date, 'date') else plant_by_date
         if plant_by_date < today:
             next_plant = today.replace(month=9, day=1) if today.month < 9 else today.replace(year=today.year+1, month=3, day=1)
             weeks_until_plant = max(0, (next_plant - today).days // 7)
