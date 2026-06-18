@@ -343,9 +343,25 @@ def forecast(crop_id):
         df     = load_crop_data(crop_id)
         series = df['quantity_kg']
 
-        model_name = request.args.get('model', 'arima')
+        model_name = request.args.get('model', 'auto')
         steps      = int(request.args.get('weeks', 12))
         farm_size  = float(request.args.get('farm_size', 1.5))
+
+        # Auto mode: pick best model per crop by lowest MAPE
+        if model_name == 'auto':
+            best_name, best_mape = 'arima', float('inf')
+            for mname, mfn in [('arima', run_arima), ('randomforest', run_random_forest),
+                                ('lstm', run_lstm), ('ensemble', ensemble_forecast)]:
+                try:
+                    raw, _ = mfn(series[:-12], 12)
+                    raw    = np.clip(raw, 0, None)[:12]
+                    actual = series.values[-12:]
+                    mape   = float(np.mean(np.abs((actual - raw[:len(actual)]) / (actual + 1e-9))) * 100)
+                    if mape < best_mape:
+                        best_mape, best_name = mape, mname
+                except:
+                    pass
+            model_name = best_name
 
         fn        = get_forecast_fn(model_name)
         raw, conf = fn(series, steps)
