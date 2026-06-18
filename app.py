@@ -605,7 +605,7 @@ def alerts_all():
         all_alerts = []
         db = get_db()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM market_prices ORDER BY week_date DESC LIMIT 7")
+        cursor.execute("SELECT * FROM market_prices ORDER BY date DESC LIMIT 7")
         rows = cursor.fetchall()
         cursor.close()
         for crop_id in range(1, 8):
