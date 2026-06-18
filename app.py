@@ -637,7 +637,8 @@ def alerts_all():
                 avg_prev = float(np.mean(prev)) if len(prev) >= 12 else avg_recent
                 trend_ratio = avg_recent / avg_prev if avg_prev > 0 else 1.0
                 crop_name = crop_names.get(crop_id, f'Crop {crop_id}')
-                crop_name_rw = intel.get('name_rw', crop_name)
+                rw_names = {1:'Ibirayi',2:'Ibigori',3:'Ibishyimbo',4:'Inyanya',5:'Isorgho',6:'Ingano',7:'Umuneke'}
+                crop_name_rw = rw_names.get(crop_id, crop_name)
                 if trend_ratio > 1.15:
                     all_alerts.append({
                         'crop_id': crop_id,
