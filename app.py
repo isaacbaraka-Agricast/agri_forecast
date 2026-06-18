@@ -475,7 +475,7 @@ def forecast(crop_id):
         # Metrics: each model back-predicts last 8 weeks vs actual (smoothed)
         actual_tail  = series.rolling(2, min_periods=1).mean().values[-8:]
         back_raw, _  = fn(series[:-8], 8)
-        back_pred    = np.clip(back_raw, 0, None)[:12]
+        back_pred    = np.clip(back_raw, 0, None)[:8]
         min_len      = min(len(actual_tail), len(back_pred))
         metrics      = compute_metrics(actual_tail[:min_len], back_pred[:min_len])
         metrics["mae_label_en"]  = "Mean Absolute Error"
