@@ -611,8 +611,7 @@ def price_forecast(crop_id):
                 "peak_price":        max_price,                           # † Flutter reads this
                 "tip_en": f"Best time to sell {crop_name} is Week {best_week} "
                           f"when price peaks at {max_price} RWF/kg.",
-                "tip_rw": f"Igihe cyiza cyo kugurisha {{1:'Ibirayi',2:'Ibigori',3:'Ibishyimbo',4:'Inyanya',5:'Isorgho',6:'Ingano',7:'Umuneke'}.get(crop_id, crop_name)} ni icyumweru cya {best_week} "
-                          f"igiciro kigera ku {max_price} RWF/kg.",
+                "tip_rw": (lambda n: f"Igihe cyiza cyo kugurisha {n} ni icyumweru cya {best_week} igiciro kigera ku {max_price} RWF/kg.")({1:'Ibirayi',2:'Ibigori',3:'Ibishyimbo',4:'Inyanya',5:'Isorgho',6:'Ingano',7:'Umuneke'}.get(crop_id, crop_name)),
             }
         })
     except Exception as e:
