@@ -599,6 +599,31 @@ def price_forecast(crop_id):
 # =============================================================
 # ROUTES -- ALERTS  (NEW -- was completely missing)
 # =============================================================
+@app.route('/alerts', methods=['GET'])
+def alerts_all():
+    try:
+        all_alerts = []
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM market_prices ORDER BY week_date DESC LIMIT 7")
+        rows = cursor.fetchall()
+        cursor.close()
+        for crop_id in range(1, 8):
+            try:
+                r = get_forecast_data(crop_id, 'ensemble', 12, 1.0)
+                signal = r.get('market', {}).get('signal', '')
+                signal_en = r.get('market', {}).get('signal_en', '')
+                crop_name = r.get('crop_name', '')
+                if signal == 'oversupply_risk':
+                    all_alerts.append({'crop_id': crop_id, 'title_en': f'{crop_name} Oversupply Risk', 'message_en': signal_en, 'severity': 'warning'})
+                elif signal == 'shortage_risk':
+                    all_alerts.append({'crop_id': crop_id, 'title_en': f'{crop_name} Shortage Opportunity', 'message_en': signal_en, 'severity': 'info'})
+            except:
+                pass
+        return jsonify({"status": "success", "alerts": all_alerts, "count": len(all_alerts)})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/alerts/<int:crop_id>')
 def get_alerts(crop_id):
     """
@@ -791,11 +816,18 @@ def compare_models(crop_id):
         start_date = datetime.today()
         dates = [(start_date + timedelta(weeks=i)).strftime("%Y-%m-%d") for i in range(steps)]
 
+        # Find best model by lowest MAPE
+        best_model = min(results, key=lambda m: results[m]["metrics"]["MAPE"])
+        best_mape  = results[best_model]["metrics"]["MAPE"]
         return jsonify({
-            "status":    "success",
-            "crop_name": CROPS.get(crop_id, f"Crop {crop_id}"),
-            "dates":     dates,
-            "models":    results
+            "status":            "success",
+            "crop_name":         CROPS.get(crop_id, f"Crop {crop_id}"),
+            "dates":             dates,
+            "models":            results,
+            "best_model":        best_model,
+            "best_mape":         best_mape,
+            "recommendation_en": f"{best_model} is the most accurate model for {CROPS.get(crop_id, 'this crop')} with MAPE of {best_mape:.1f}%",
+            "recommendation_rw": f"{best_model} ni indorerezi nziza kuruta izindi kuri {CROPS.get(crop_id, 'iri shyamba')} ifite MAPE ya {best_mape:.1f}%"
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

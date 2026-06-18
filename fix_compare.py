@@ -1,17 +1,31 @@
-﻿f=open("C:/xampp/htdocs/agri_forecast/agri_mobile/lib/main.dart","r",encoding="utf-8")
-c=f.read()
-f.close()
+﻿with open("C:/xampp/htdocs/agri_forecast/app.py", "r", encoding="utf-8") as f:
+    content = f.read()
 
-old="class _ComparePageState extends State<ComparePage> {\n  int  _cropId = 1;\n  int  _weeks  = 12;\n  bool _loading = false;\n  Map<String, dynamic>? _result;\n  String? _error;\n\n  Future<void> _fetch()"
+old = """        return jsonify({
+            "status":    "success",
+            "crop_name": CROPS.get(crop_id, f"Crop {crop_id}"),
+            "dates":     dates,
+            "models":    results
+        })"""
 
-new="class _ComparePageState extends State<ComparePage> {\n  int  _cropId = 1;\n  int  _weeks  = 12;\n  bool _loading = false;\n  Map<String, dynamic>? _result;\n  String? _error;\n\n  @override\n  void initState() {\n    super.initState();\n    if (UserSession.lastCropId != null) _cropId = UserSession.lastCropId!;\n    _fetch();\n  }\n\n  Future<void> _fetch()"
+new = """        # Find best model by lowest MAPE
+        best_model = min(results, key=lambda m: results[m]["metrics"]["MAPE"])
+        best_mape  = results[best_model]["metrics"]["MAPE"]
+        return jsonify({
+            "status":            "success",
+            "crop_name":         CROPS.get(crop_id, f"Crop {crop_id}"),
+            "dates":             dates,
+            "models":            results,
+            "best_model":        best_model,
+            "best_mape":         best_mape,
+            "recommendation_en": f"{best_model} is the most accurate model for {CROPS.get(crop_id, 'this crop')} with MAPE of {best_mape:.1f}%",
+            "recommendation_rw": f"{best_model} ni indorerezi nziza kuruta izindi kuri {CROPS.get(crop_id, 'iri shyamba')} ifite MAPE ya {best_mape:.1f}%"
+        })"""
 
-if old in c:
-    c=c.replace(old,new,1)
-    print("OK")
+if old in content:
+    content = content.replace(old, new)
+    with open("C:/xampp/htdocs/agri_forecast/app.py", "w", encoding="utf-8") as f:
+        f.write(content)
+    print("SUCCESS: best_model added to compare")
 else:
-    print("FAILED")
-
-f=open("C:/xampp/htdocs/agri_forecast/agri_mobile/lib/main.dart","w",encoding="utf-8")
-f.write(c)
-f.close()
+    print("ERROR: not found")
