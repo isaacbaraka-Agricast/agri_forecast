@@ -1683,7 +1683,7 @@ class _SeasonStrip extends StatelessWidget {
     final seasons = [
       ('A', T.seasonA, T.rw ? 'Itera gikomeye. Isoko rinini ry\'ibihingwa.' : 'Primary planting & harvest. Peak demand.'),
       ('B', T.seasonB, T.rw ? 'Itera rya kabiri. Isoko rizamuka Kamena.' : 'Second planting cycle. Rising demand mid-June.'),
-      ('C', T.seasonC, T.rw ? 'Igihe cy\'icyuho. Ibiciro bizamuka 20–35%.' : 'Dry season. Prices peak 20–35%.'),
+
     ];
     return Row(
       children: seasons.asMap().entries.map((e) {
