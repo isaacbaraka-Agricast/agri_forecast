@@ -1,0 +1,95 @@
+﻿  final _nameCtrl  = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _passCtrl  = TextEditingController();
+  final _formKey   = GlobalKey<FormState>();
+  String _role     = 'farmer';
+  String _sector   = 'Muhoza';
+  bool   _loading  = false;
+  bool   _obscure  = true;
+  String? _error, _success;
+
+  static const _sectors = ['Muhoza', 'Kinigi', 'Cyuve', 'Busogo', 'Shingiro'];
+  static const _roles = [
+    {'value': 'farmer',      'label': 'ðŸŒ± Farmer / Umuhinzi'},
+    {'value': 'buyer',       'label': 'ðŸ›’ Buyer / Umuguzimbuto'},
+    {'value': 'cooperative', 'label': 'ðŸ¤ Cooperative / Koperative'},
+    {'value': 'extension',   'label': 'ðŸ“‹ Extension Officer'},
+  ];
+
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _loading = true; _error = null; _success = null; });
+    try {
+      final d = await ApiService.post('/register', {
+        'full_name': _nameCtrl.text.trim(),
+        'phone':     _phoneCtrl.text.trim(),
+        'password':  _passCtrl.text,
+        'role':      _role,
+        'sector':    _sector,
+      });
+      if (d['status'] == 'success') {
+        setState(() => _success = 'Account created! Please sign in.');
+        Future.delayed(const Duration(seconds: 2),
+            () => Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (_) => const LoginPage())));
+      } else {
+        setState(() => _error = d['message'] ?? 'Registration failed');
+      }
+    } catch (_) {
+      setState(() => _error = 'Cannot connect to server.');
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(T.signUp),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(children: [
+            const SizedBox(height: 10),
+            const Text('ðŸŒ¿', style: TextStyle(fontSize: 52)),
+            const SizedBox(height: 12),
+            Text(T.rw
+                ? 'Iyandikishe â€” Agri Forecast'
+                : 'Create your account',
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.w800,
+                    color: kForest)),
+            const SizedBox(height: 24),
+
+            _FieldCard(children: [
+              TextFormField(
+                controller: _nameCtrl,
+                decoration: InputDecoration(
+                    labelText: T.fullName,
+                    prefixIcon: const Icon(Icons.person, color: kLeaf)),
+                textCapitalization: TextCapitalization.words,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Enter full name' : null,
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                    labelText: T.phone,
+                    hintText: '+250 7XX XXX XXX',
+                    prefixIcon: const Icon(Icons.phone, color: kLeaf)),
+                validator: (v) => (v == null || v.isEmpty)
+                    ? 'Enter phone number' : null,
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _passCtrl,
+                obscureText: _obscure,
+                decoration: InputDecoration(

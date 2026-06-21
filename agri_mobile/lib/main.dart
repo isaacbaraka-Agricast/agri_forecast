@@ -5,6 +5,7 @@
 // Supervisor: Dr MUSABE JEAN BOSCO
 // University of Kigali — School of Computing & IT — BBIT 2026
 // =============================================================
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -976,6 +977,7 @@ class _RegisterState extends State<RegisterPage> {
   final _nameCtrl  = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _passCtrl  = TextEditingController();
+  final _farmCtrl  = TextEditingController(text: '1.0');
   final _formKey   = GlobalKey<FormState>();
   String _role     = 'farmer';
   String _sector   = 'Muhoza';
@@ -1001,6 +1003,7 @@ class _RegisterState extends State<RegisterPage> {
         'password':  _passCtrl.text,
         'role':      _role,
         'sector':    _sector,
+        'farm_size_acres': double.tryParse(_farmCtrl.text) ?? 1.0,
       });
       if (d['status'] == 'success') {
         setState(() => _success = 'Account created! Please sign in.');
@@ -1101,6 +1104,24 @@ class _RegisterState extends State<RegisterPage> {
                 items: _sectors.map((s) => DropdownMenuItem<String>(
                     value: s, child: Text(s))).toList(),
                 onChanged: (v) => setState(() => _sector = v!),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _farmCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                    labelText: T.rw ? "Ingano y'Inzara (Acres)" : 'Farm Size (Acres)',
+                    hintText: T.rw ? 'Urugero: 1.5' : 'e.g. 1.5',
+                    prefixIcon: const Icon(Icons.agriculture, color: kLeaf)),
+                validator: (v) {
+                  final n = double.tryParse(v ?? '');
+                  if (n == null || n <= 0 || n > 100) {
+                    return T.rw
+                        ? 'Andika ingano hagati ya 0.1 na 100'
+                        : 'Enter a size between 0.1 and 100 acres';
+                  }
+                  return null;
+                },
               ),
             ]),
 
@@ -2158,6 +2179,13 @@ class _ForecastPageState extends State<ForecastPage> {
       setState(() { _result = d; _loading = false; });
       widget.onResult?.call(d);
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(T.rw ? 'Iteganyabikorwa ryarangiye ✅' : 'Forecast ready ✅'),
+          backgroundColor: kForest,
+          duration: const Duration(seconds: 2),
+        ));
+      }
+      if (mounted) {
         await Future.delayed(const Duration(milliseconds: 300));
         if (mounted) {
           showModalBottomSheet(
@@ -2172,6 +2200,12 @@ class _ForecastPageState extends State<ForecastPage> {
       }
     } catch (e) {
       setState(() { _error = '$e'; _loading = false; });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${T.error}: $e'),
+          backgroundColor: kRed,
+        ));
+      }
     }
   }
   @override
@@ -2195,6 +2229,8 @@ class _ForecastPageState extends State<ForecastPage> {
               value: _model,
               onChanged: (v) => setState(() => _model = v),
             ),
+            const SizedBox(height: 10),
+            _MethodExplainCard(model: _model),
             const SizedBox(height: 12),
             _WeeksSlider(
               value: _weeks,
@@ -3021,9 +3057,22 @@ class _PricePageState extends State<PricePage> {
           '/price_forecast/$_cropId?model=$_model&weeks=$_weeks');
       if (d['status'] != 'success') throw Exception(d['message']);
       setState(() { _result = d; _loading = false; });
-widget.onResult?.call(d);
+      widget.onResult?.call(d);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(T.rw ? 'Igiciro cyabonetse ✅' : 'Price forecast ready ✅'),
+          backgroundColor: kForest,
+          duration: const Duration(seconds: 2),
+        ));
+      }
     } catch (e) {
       setState(() { _error = '$e'; _loading = false; });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${T.error}: $e'),
+          backgroundColor: kRed,
+        ));
+      }
     }
   }
 
@@ -3301,8 +3350,21 @@ class _ComparePageState extends State<ComparePage> {
           '/compare/$_cropId?weeks=$_weeks');
       if (d['status'] != 'success') throw Exception(d['message']);
       setState(() { _result = d; _loading = false; });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(T.rw ? 'Igereranya ryarangiye ✅' : 'Comparison ready ✅'),
+          backgroundColor: kForest,
+          duration: const Duration(seconds: 2),
+        ));
+      }
     } catch (e) {
       setState(() { _error = '$e'; _loading = false; });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${T.error}: $e'),
+          backgroundColor: kRed,
+        ));
+      }
     }
   }
 
@@ -3627,8 +3689,21 @@ class _AlertsPageState extends State<AlertsPage> {
       final d = await ApiService.get('/alerts/$_cropId');
       if (d['status'] != 'success') throw Exception(d['message']);
       setState(() { _result = d; _loading = false; });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(T.rw ? 'Imenyesha ryavuguruwe ✅' : 'Alerts updated ✅'),
+          backgroundColor: kForest,
+          duration: const Duration(seconds: 2),
+        ));
+      }
     } catch (e) {
       setState(() { _error = '$e'; _loading = false; });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${T.error}: $e'),
+          backgroundColor: kRed,
+        ));
+      }
     }
   }
 
@@ -3846,6 +3921,77 @@ class _CropDropdown extends StatelessWidget {
     )).toList(),
     onChanged: (v) { if (v != null) onChanged(v); },
   );
+}
+
+/// Method explanation card — shown under the model dropdown
+const Map<String, Map<String, String>> kMethodExplain = {
+  'arima': {
+    'icon': '📉',
+    'title_en': 'ARIMA — Statistical',
+    'title_rw': 'ARIMA — Imibare',
+    'text_en': 'Looks at past patterns and seasonal cycles in the data to predict what comes next. Works well for crops with steady, repeating demand.',
+    'text_rw': "Irebera ku byagenze mu bihe byashize n'ibisanzwe bisubiramo mu mwaka kugira ngo iteganye ibizaba. Ikora neza ku bihingwa bifite ibisabwa bihoraho kandi bisubiramo.",
+  },
+  'randomforest': {
+    'icon': '🌳',
+    'title_en': 'Random Forest — Machine Learning',
+    'title_rw': "Ishyamba ry'Uburumbu — Ikoranabuhanga",
+    'text_en': 'Combines many small decision rules learned from past data to make one strong prediction. Handles sudden changes in demand well.',
+    'text_rw': "Ihuza amategeko menshi mato yigiriwe ku makuru yashize kugira ngo igere ku iteganyabikorwa rimwe rikomeye. Ikora neza iyo ibisabwa byahindutse vuba.",
+  },
+  'lstm': {
+    'icon': '🧠',
+    'title_en': 'LSTM — Deep Learning',
+    'title_rw': "LSTM — Kwiga Byimbitse",
+    'text_en': 'A neural network that remembers long sequences of past demand to spot complex trends humans might miss. Needs more data to be accurate.',
+    'text_rw': "Ni uburyo bw'ubwenge bw'ikoranabuhanga bwibuka uruhererekane rurerure rw'ibisabwa byashize kugira ngo rumenye imigendekere igoye. Bisaba amakuru menshi kugira ngo bibe nyabwo.",
+  },
+  'ensemble': {
+    'icon': '⚖️',
+    'title_en': 'Ensemble — Combined',
+    'title_rw': 'Ensemble — Bivanze',
+    'text_en': 'Averages the predictions of all four methods together. Usually more stable than any single method, but not always the most accurate per crop.',
+    'text_rw': "Ifatanya iteganyabikorwa ry'uburyo bune hamwe rikabarwa impuzandengo. Akenshi iba ihamye kurusha uburyo bumwe, ariko si ko buri gihe iba ari yo nziza ku gihingwa runaka.",
+  },
+};
+
+class _MethodExplainCard extends StatelessWidget {
+  final String model;
+  const _MethodExplainCard({required this.model});
+  @override
+  Widget build(BuildContext context) {
+    final ex = kMethodExplain[model] ?? kMethodExplain['ensemble']!;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: kSprout.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: kSprout.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(ex['icon']!, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(T.rw ? ex['title_rw']! : ex['title_en']!,
+                    style: const TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w700, color: kForest)),
+                const SizedBox(height: 3),
+                Text(T.rw ? ex['text_rw']! : ex['text_en']!,
+                    style: const TextStyle(
+                        fontSize: 11.5, color: kMuted, height: 1.35)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Model dropdown
@@ -4383,28 +4529,30 @@ class _ReportsPageState extends State<ReportsPage> {
             pw.SizedBox(height: 16),
           ],
 
-          // Footer
-          pw.Divider(color: PdfColors.green300),
-          pw.Text(
-            'BARAKA ISAAC (2305000514) · Supervisor: Dr MUSABE JEAN BOSCO'
-            ' · University of Kigali · BBIT 2026',
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey),
-            textAlign: pw.TextAlign.center,
-          ),
+          
         ],
       ));
 
       final bytes = await pdf.save();
-      if (share) {
-        await Printing.sharePdf(bytes: bytes, filename: 'AgriCast_Planting_Plan.pdf');
+      final fileName = 'AgriCast_Report_\${DateTime.now().millisecondsSinceEpoch}.pdf';
+      if (share || kIsWeb) {
+        // Web: always trigger browser download/share dialog (no filesystem access on web)
+        await Printing.sharePdf(bytes: bytes, filename: fileName);
+        if (mounted && !share) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(T.rw ? 'PDF yatangiye gukurikizwa ✅' : 'PDF download started ✅'),
+            backgroundColor: kForest,
+            duration: const Duration(seconds: 3),
+          ));
+        }
       } else {
-        // Save to downloads
-        final dir = await getExternalStorageDirectory();
-        final file = File('\${dir!.path}/AgriCast_Planting_Plan.pdf');
+        // Mobile (Android/iOS): save to app documents directory
+        final dir = await getApplicationDocumentsDirectory();
+        final file = File('${dir.path}/$fileName');
         await file.writeAsBytes(bytes);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('PDF saved to \${file.path}'),
+            content: Text(T.rw ? 'PDF yabitswe ✅ Koresha Sangira kugira ngo uyimenyeshe' : 'PDF saved ✅ Use Share to send it'),
             backgroundColor: kForest,
             duration: const Duration(seconds: 4),
           ));

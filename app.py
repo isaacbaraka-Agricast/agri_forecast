@@ -1004,6 +1004,13 @@ def register():
         phone     = data.get('phone', '').strip()
         pwd       = data.get('password', '')
         role      = data.get('role', 'farmer')
+        sector    = data.get('sector', 'Muhoza').strip()
+        try:
+            farm_size_acres = float(data.get('farm_size_acres', 1.0))
+        except (TypeError, ValueError):
+            farm_size_acres = 1.0
+        if farm_size_acres <= 0 or farm_size_acres > 100:
+            farm_size_acres = 1.0
 
         if not full_name or not phone or not pwd:
             return jsonify({"status": "error", "message": "All fields required"}), 400
@@ -1019,8 +1026,8 @@ def register():
             return jsonify({"status": "error", "message": "Phone already registered"}), 409
 
         cur.execute(
-            "INSERT INTO users (full_name, phone, password, role, created_at) VALUES (%s,%s,%s,%s,NOW())",
-            (full_name, phone, hashed, role)
+            "INSERT INTO users (full_name, phone, password, role, sector, farm_size_acres, created_at) VALUES (%s,%s,%s,%s,%s,%s,NOW())",
+            (full_name, phone, hashed, role, sector, farm_size_acres)
         )
         db.commit()
         user_id = cur.lastrowid
@@ -1029,7 +1036,7 @@ def register():
         return jsonify({
             "status": "success",
             "message": "Account created",
-            "user": {"user_id": user_id, "full_name": full_name, "phone": phone, "role": role}
+            "user": {"user_id": user_id, "full_name": full_name, "phone": phone, "role": role, "sector": sector, "farm_size_acres": farm_size_acres}
         }), 201
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
