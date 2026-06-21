@@ -1333,7 +1333,11 @@ def ask_assistant():
             return jsonify({"status": "error", "message": "AI assistant not configured"}), 503
 
         crop_names = {1:'Irish Potato',2:'Maize',3:'Beans',4:'Tomato',5:'Sorghum',6:'Wheat',7:'Banana'}
-        base_url = f"http://localhost:{os.environ.get('PORT', 5000)}"
+        base_url = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+        if base_url:
+            base_url = f"https://{base_url}"
+        else:
+            base_url = f"http://localhost:5000"
 
         summaries = []
         for cid, cname in crop_names.items():
