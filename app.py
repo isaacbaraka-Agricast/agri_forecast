@@ -427,6 +427,7 @@ def forecast(crop_id):
         if plant_by_date < today:
             next_plant = today.replace(month=9, day=1) if today.month < 9 else today.replace(year=today.year+1, month=3, day=1)
             weeks_until_plant = max(0, (next_plant - today).days // 7)
+            plant_by_date = next_plant
         else:
             weeks_until_plant = max(0, (plant_by_date - today).days // 7)
 

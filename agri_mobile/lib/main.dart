@@ -6,6 +6,8 @@
 // University of Kigali — School of Computing & IT — BBIT 2026
 // =============================================================
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -242,7 +244,7 @@ class ApiService {
   static Future<Map<String, dynamic>> post(
     String path,
     Map<String, dynamic> body, {
-    bool requireAuth = false,
+    bool requireAuth = true,
   }) async {
     final res = await http
         .post(
@@ -428,7 +430,7 @@ class _SplashState extends State<SplashScreen>
     Future.delayed(const Duration(milliseconds: 400),
         () => _textCtrl.forward());
     _checkApi();
-    Future.delayed(const Duration(milliseconds: 3200), _goToLogin);
+    Future.delayed(const Duration(milliseconds: 3200), _decideNext);
   }
 
   Future<void> _checkApi() async {
@@ -438,8 +440,18 @@ class _SplashState extends State<SplashScreen>
     } catch (_) {}
   }
 
-  void _goToLogin() {
-    if (mounted) {
+  Future<void> _decideNext() async {
+    final restored = await UserSession.restore();
+    if (!mounted) return;
+    if (restored) {
+      Navigator.pushReplacement(context,
+          PageRouteBuilder(
+            pageBuilder: (_, a, __) => const MainShell(),
+            transitionsBuilder: (_, a, __, child) =>
+                FadeTransition(opacity: a, child: child),
+            transitionDuration: const Duration(milliseconds: 500),
+          ));
+    } else {
       Navigator.pushReplacement(context,
           PageRouteBuilder(
             pageBuilder: (_, a, __) => const LoginPage(),
@@ -649,13 +661,48 @@ class UserSession {
     if (token != null) {
       ApiService.setToken(token);
     }
+    _persist(d, token);
+  }
+
+  static Future<void> _persist(Map<String, dynamic> d, String? token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (token != null) await prefs.setString('token', token);
+      await prefs.setString('full_name', name);
+      await prefs.setString('phone', phone);
+      await prefs.setString('role', role);
+      await prefs.setString('sector', sector);
+      await prefs.setDouble('farm_size_acres', farmSizeAcres);
+    } catch (_) {}
+  }
+
+  /// Call once at startup. Returns true if a saved session was restored.
+  static Future<bool> restore() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null || token.isEmpty) return false;
+      name   = prefs.getString('full_name') ?? '';
+      phone  = prefs.getString('phone') ?? '';
+      role   = prefs.getString('role') ?? 'farmer';
+      sector = prefs.getString('sector') ?? '';
+      farmSizeAcres = prefs.getDouble('farm_size_acres') ?? 1.0;
+      ApiService.setToken(token);
+      loggedIn = true;
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Map<String,dynamic>? lastForecast;
   static int? lastCropId;
   static String? lastModel;
   static void saveForecast(Map<String,dynamic> d,int cid,String m){lastForecast=d;lastCropId=cid;lastModel=m;}
-  static void clear(){name=phone=role=sector='';loggedIn=false;lastForecast=null;lastCropId=null;lastModel=null;ApiService.clearToken();}
+  static void clear(){
+    name=phone=role=sector='';loggedIn=false;lastForecast=null;lastCropId=null;lastModel=null;ApiService.clearToken();
+    SharedPreferences.getInstance().then((p) => p.clear());
+  }
 
   static String get roleEmoji => switch (role) {
         'buyer' => '🛒',
@@ -2601,13 +2648,57 @@ class _ForecastResultView extends StatelessWidget {
 // =============================================================
 //  PLANTING ADVICE SHEET
 // =============================================================
-class _PlantingAdviceSheet extends StatelessWidget {
+class _PlantingAdviceSheet extends StatefulWidget {
   final Map<String, dynamic> advice;
   const _PlantingAdviceSheet({required this.advice});
+  @override
+  State<_PlantingAdviceSheet> createState() => _PlantingAdviceSheetState();
+}
+
+class _PlantingAdviceSheetState extends State<_PlantingAdviceSheet> {
+  final FlutterTts _tts = FlutterTts();
+  bool _speaking = false;
+
+  Map<String, dynamic> get advice => widget.advice;
 
   String _fmtK(int v) {
     if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';
     return '$v';
+  }
+
+  String _buildSpeechText() {
+    final cropName   = advice['crop_name']  as String;
+    final targetKg   = advice['target_kg']  as int;
+    final urgencyMsg = advice['urgency_msg'] as String;
+    final signalMsg  = advice['signal_msg']  as String;
+    if (T.rw) {
+      return "Inama yo gutera $cropName. Intego yawe ni kilogarama $targetKg. $urgencyMsg. $signalMsg";
+    } else {
+      return "Planting advice for $cropName. Your target is $targetKg kilograms. $urgencyMsg. $signalMsg";
+    }
+  }
+
+  Future<void> _speak(String text, bool isRw) async {
+    if (_speaking) {
+      await _tts.stop();
+      if (mounted) setState(() => _speaking = false);
+      return;
+    }
+    await _tts.setLanguage(isRw ? 'rw-RW' : 'en-US');
+    await _tts.setSpeechRate(0.45);
+    await _tts.setPitch(1.0);
+    _tts.setCompletionHandler(() {
+      if (mounted) setState(() => _speaking = false);
+    });
+    setState(() => _speaking = true);
+    final result = await _tts.speak(text);
+    if (result != 1 && mounted) setState(() => _speaking = false);
+  }
+
+  @override
+  void dispose() {
+    _tts.stop();
+    super.dispose();
   }
 
   @override
@@ -2686,6 +2777,15 @@ class _PlantingAdviceSheet extends StatelessWidget {
                             fontSize: 13, color: kMuted)),
                   ],
                 ),
+              ),
+              IconButton(
+                onPressed: () => _speak(_buildSpeechText(), T.rw),
+                icon: Icon(
+                  _speaking ? Icons.stop_circle : Icons.volume_up,
+                  color: _speaking ? kRed : kForest,
+                  size: 28,
+                ),
+                tooltip: T.rw ? 'Umva inama' : 'Listen to advice',
               ),
             ]),
             const SizedBox(height: 20),
@@ -4838,7 +4938,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
     setState(() => _saving = true);
     try {
-      final d = await ApiService.post('/profile/update', {'farm_size_acres': acres, 'sector': UserSession.sector});
+      final d = await ApiService.post('/profile/update', {'farm_size_acres': acres, 'sector': UserSession.sector}, requireAuth: true);
       if (d['status'] == 'success') {
         UserSession.farmSizeAcres = acres;
         setState(() { _editingFarm = false; _saving = false; });
