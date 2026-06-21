@@ -92,6 +92,7 @@ class T {
   static String get advice        => s('Farmer Advice',              "Inama z'Umuhinzi");
   static String get fullName      => s('Full Name',                  'Amazina Yose');
   static String get phone         => s('Phone Number',               'Nomero ya Telefoni');
+  static String get phoneOrEmail  => s('Phone or Email',              "Telefoni cyangwa Imeyili");
   static String get password      => s('Password',                   'Ijambo ry\'Ibanga');
   static String get signIn        => s('Sign In',                    'Injira');
   static String get signUp        => s('Create Account',             'Iyandikishe');
@@ -903,18 +904,18 @@ class _LoginState extends State<LoginPage>
 
                           TextFormField(
                             controller: _phoneCtrl,
-                            keyboardType: TextInputType.phone,
+                            keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              labelText: T.phone,
-                              hintText: '+250 7XX XXX XXX',
+                              labelText: T.phoneOrEmail,
+                              hintText: T.rw ? '+250 7XX... cyangwa imeyili' : '+250 7XX XXX XXX or email',
                               prefixIcon: const Icon(
-                                Icons.phone_android,
+                                Icons.person_outline,
                                 color: kLeaf,
                               ),
                             ),
                             validator: (v) =>
                                 (v == null || v.isEmpty)
-                                    ? 'Enter phone number'
+                                    ? 'Enter phone or email'
                                     : null,
                           ),
 
@@ -1026,6 +1027,7 @@ class _RegisterState extends State<RegisterPage> {
   final _phoneCtrl = TextEditingController();
   final _passCtrl  = TextEditingController();
   final _farmCtrl  = TextEditingController(text: '1.0');
+  final _emailCtrl = TextEditingController();
   final _formKey   = GlobalKey<FormState>();
   String _role     = 'farmer';
   String _sector   = 'Muhoza';
@@ -1052,6 +1054,7 @@ class _RegisterState extends State<RegisterPage> {
         'role':      _role,
         'sector':    _sector,
         'farm_size_acres': double.tryParse(_farmCtrl.text) ?? 1.0,
+        'email': _emailCtrl.text.trim(),
       });
       if (d['status'] == 'success') {
         setState(() => _success = 'Account created! Please sign in.');
@@ -1113,6 +1116,21 @@ class _RegisterState extends State<RegisterPage> {
                     prefixIcon: const Icon(Icons.phone, color: kLeaf)),
                 validator: (v) => (v == null || v.isEmpty)
                     ? 'Enter phone number' : null,
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                    labelText: T.rw ? 'Imeyili (Ntibisabwa)' : 'Email (Optional)',
+                    hintText: 'name@example.com',
+                    prefixIcon: const Icon(Icons.email_outlined, color: kLeaf)),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null;
+                  final emailRegex = RegExp(r'^[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}\$');
+                  return emailRegex.hasMatch(v.trim()) ? null
+                      : (T.rw ? 'Imeyili siyo' : 'Enter a valid email');
+                },
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -1276,12 +1294,12 @@ class _ForgotPasswordState extends State<ForgotPasswordPage> {
             _FieldCard(children: [
               TextFormField(
                 controller: _phoneCtrl,
-                keyboardType: TextInputType.phone,
+                keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                    labelText: T.phone,
+                    labelText: T.phoneOrEmail,
                     hintText: '+250 7XX XXX XXX',
-                    prefixIcon: const Icon(Icons.phone, color: kLeaf)),
-                validator: (v) => (v == null || v.isEmpty) ? 'Enter phone number' : null,
+                    prefixIcon: const Icon(Icons.person_outline, color: kLeaf)),
+                validator: (v) => (v == null || v.isEmpty) ? 'Enter phone or email' : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
