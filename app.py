@@ -975,16 +975,16 @@ def weather():
 @app.route('/login', methods=['POST'])
 def login():
     try:
-        data   = request.get_json() or {}
-        phone  = data.get('phone', '').strip()
-        pwd    = data.get('password', '')
-        if not phone or not pwd:
-            return jsonify({"status": "error", "message": "Phone and password required"}), 400
+        data       = request.get_json() or {}
+        identifier = data.get('phone', '').strip()
+        pwd        = data.get('password', '')
+        if not identifier or not pwd:
+            return jsonify({"status": "error", "message": "Phone/email and password required"}), 400
         hashed = hashlib.sha256(pwd.encode()).hexdigest()
         db     = get_db()
         cur    = db.cursor(dictionary=True)
-        cur.execute("SELECT user_id, full_name, phone, role, sector, farm_size_acres FROM users WHERE phone=%s AND password=%s",
-                    (phone, hashed))
+        cur.execute("SELECT user_id, full_name, phone, email, role, sector, farm_size_acres FROM users WHERE (phone=%s OR email=%s) AND password=%s",
+                    (identifier, identifier, hashed))
         user   = cur.fetchone()
         cur.close(); db.close()
         if user:
@@ -1006,6 +1006,7 @@ def register():
         pwd       = data.get('password', '')
         role      = data.get('role', 'farmer')
         sector    = data.get('sector', 'Muhoza').strip()
+        email     = data.get('email', '').strip() or None
         try:
             farm_size_acres = float(data.get('farm_size_acres', 1.0))
         except (TypeError, ValueError):
@@ -1027,8 +1028,8 @@ def register():
             return jsonify({"status": "error", "message": "Phone already registered"}), 409
 
         cur.execute(
-            "INSERT INTO users (full_name, phone, password, role, sector, farm_size_acres, created_at) VALUES (%s,%s,%s,%s,%s,%s,NOW())",
-            (full_name, phone, hashed, role, sector, farm_size_acres)
+            "INSERT INTO users (full_name, phone, password, role, sector, farm_size_acres, email, created_at) VALUES (%s,%s,%s,%s,%s,%s,%s,NOW())",
+            (full_name, phone, hashed, role, sector, farm_size_acres, email)
         )
         db.commit()
         user_id = cur.lastrowid
@@ -1037,7 +1038,7 @@ def register():
         return jsonify({
             "status": "success",
             "message": "Account created",
-            "user": {"user_id": user_id, "full_name": full_name, "phone": phone, "role": role, "sector": sector, "farm_size_acres": farm_size_acres}
+            "user": {"user_id": user_id, "full_name": full_name, "phone": phone, "email": email, "role": role, "sector": sector, "farm_size_acres": farm_size_acres}
         }), 201
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -1184,6 +1185,10 @@ def init_db():
             pass
         try:
             cur.execute("ALTER TABLE users ADD COLUMN farm_size_acres DECIMAL(6,2) DEFAULT 1.0")
+        except Exception:
+            pass
+        try:
+            cur.execute("ALTER TABLE users ADD COLUMN email VARCHAR(120) DEFAULT NULL")
         except Exception:
             pass
 
