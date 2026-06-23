@@ -1436,6 +1436,17 @@ class _MainShellState extends State<MainShell> {   // ← already there
         ],
       ),
       body: IndexedStack(index: _tab, children: _pages),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: kForest,
+        tooltip: T.rw ? 'Baza Umufasha wa AI' : 'Ask AI Assistant',
+        onPressed: () => showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => const _AiAssistantSheet(),
+        ),
+        child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _tab,
         onTap: (i) => setState(() => _tab = i),
@@ -2949,7 +2960,7 @@ class _PlantingAdviceSheetState extends State<_PlantingAdviceSheet> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${_fmtK(targetKg)} kg',
+                    '${fmtFull(targetKg)} kg',
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 38,
@@ -2981,7 +2992,7 @@ class _PlantingAdviceSheetState extends State<_PlantingAdviceSheet> {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Rwf ${_fmtK((targetKg * (advice["avg_price"] as num? ?? 500)).round())}',
+                            'Rwf ${fmtFull((targetKg * (advice["avg_price"] as num? ?? 500)).round())}',
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,
@@ -3046,7 +3057,7 @@ class _PlantingAdviceSheetState extends State<_PlantingAdviceSheet> {
               Expanded(child: _AdviceKpi(
                 icon: '🌱',
                 label: T.rw ? 'Gutera (kg)' : 'Plant (kg)',
-                value: _fmtK(plantingKg),
+                value: fmtFull(plantingKg),
                 color: kSprout,
                 sub: T.rw ? 'hamwe na 20%' : 'incl. 20% buffer',
               )),
@@ -3202,6 +3213,147 @@ class _PlantingAdviceSheetState extends State<_PlantingAdviceSheet> {
                 child: Text(T.gotIt),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================
+//  AI ASSISTANT SHEET
+// =============================================================
+class _AiAssistantSheet extends StatefulWidget {
+  const _AiAssistantSheet();
+  @override
+  State<_AiAssistantSheet> createState() => _AiAssistantSheetState();
+}
+
+class _AiAssistantSheetState extends State<_AiAssistantSheet> {
+  final _ctrl = TextEditingController();
+  bool _loading = false;
+  String? _answer;
+  String? _error;
+
+  Future<void> _ask() async {
+    final q = _ctrl.text.trim();
+    if (q.isEmpty) return;
+    setState(() { _loading = true; _answer = null; _error = null; });
+    try {
+      final d = await ApiService.post('/ask', {
+        'question': q,
+        'farm_size_acres': UserSession.farmSizeAcres,
+        'sector': UserSession.sector,
+        'lang': T.rw ? 'rw' : 'en',
+      }, requireAuth: false);
+      if (d['status'] == 'success') {
+        setState(() => _answer = d['answer'] as String);
+      } else {
+        setState(() => _error = d['message'] ?? 'Failed');
+      }
+    } catch (e) {
+      setState(() => _error = e.toString());
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 12, 20,
+          MediaQuery.of(context).viewInsets.bottom + 28),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(width: 40, height: 4,
+                decoration: BoxDecoration(color: kBorder,
+                    borderRadius: BorderRadius.circular(2))),
+            ),
+            const SizedBox(height: 16),
+            Row(children: [
+              const Icon(Icons.smart_toy, color: kForest, size: 26),
+              const SizedBox(width: 10),
+              Text(
+                T.rw ? 'Umufasha wa AI' : 'AI Farm Assistant',
+                style: const TextStyle(fontSize: 17,
+                    fontWeight: FontWeight.w800, color: kForest),
+              ),
+            ]),
+            const SizedBox(height: 6),
+            Text(
+              T.rw
+                  ? 'Baza ikibazo icyo aricyo cyose ku bijyanye no gutera - gisubiza hakoreshejwe amakuru y\'isoko yo muri Musanze'
+                  : 'Ask any farming question - answers use live Musanze market data',
+              style: const TextStyle(fontSize: 12, color: kMuted),
+            ),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  controller: _ctrl,
+                  decoration: InputDecoration(
+                    hintText: T.rw
+                        ? 'Urugero: Ni ikihe gifitiye inyungu gutera?'
+                        : 'e.g. Which crop is most profitable this season?',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                  ),
+                  onSubmitted: (_) => _ask(),
+                  textInputAction: TextInputAction.send,
+                ),
+              ),
+              const SizedBox(width: 10),
+              _loading
+                  ? const SizedBox(width: 44, height: 44,
+                      child: CircularProgressIndicator(
+                          color: kSprout, strokeWidth: 3))
+                  : IconButton.filled(
+                      style: IconButton.styleFrom(backgroundColor: kForest),
+                      icon: const Icon(Icons.send, color: Colors.white),
+                      onPressed: _ask,
+                    ),
+            ]),
+            if (_error != null) ...[
+              const SizedBox(height: 14),
+              _ErrorBanner(_error!),
+            ],
+            if (_answer != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: kSprout.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: kSprout.withValues(alpha: 0.25)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Icon(Icons.eco, color: kForest, size: 16),
+                      const SizedBox(width: 6),
+                      Text(T.rw ? 'Igisubizo' : 'AI Response',
+                          style: const TextStyle(fontWeight: FontWeight.w700,
+                              fontSize: 12, color: kForest)),
+                    ]),
+                    const SizedBox(height: 10),
+                    Text(_answer!,
+                        style: const TextStyle(fontSize: 14, height: 1.5)),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
           ],
         ),
       ),
