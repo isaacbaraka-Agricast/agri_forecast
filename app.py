@@ -1380,7 +1380,7 @@ def ask_assistant():
                     f"urgency: {fa.get('urgency','?')} ({fa.get('urgency_en','')})"
                 )
             except Exception as e:
-                summaries.append(f"{cname}: data unavailable ({str(e)[:80)})")
+                summaries.append(f"{cname}: data unavailable ({str(e)[:80]})")
                 continue
 
         data_block = "\n".join(summaries)
