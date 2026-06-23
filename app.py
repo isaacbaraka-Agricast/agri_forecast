@@ -451,8 +451,6 @@ def forecast(crop_id):
             # harvest-ready week itself (first realistic sell opportunity).
             peak_week = weeks_to_harvest + 1
         peak_date = start_date + timedelta(weeks=peak_week - 1)
-        else:
-            weeks_until_plant = max(0, (plant_by_date - today).days // 7)
 
         # Planting urgency
         if weeks_until_plant == 0:
