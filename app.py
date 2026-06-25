@@ -627,6 +627,10 @@ def price_forecast(crop_id):
         # Best sell date string
         best_date = (start_date + timedelta(weeks=best_week - 1)).strftime("%b %d, %Y")
 
+        # Is this price movement actually meaningful, or basically flat?
+        price_spread_pct = ((max_price - current_price) / current_price * 100) if current_price > 0 else 0
+        is_meaningful_swing = abs(price_spread_pct) >= 3.0   # less than 3% = effectively flat
+
         return jsonify({
             "status":        "success",
             "crop_name":     crop_name,
@@ -636,11 +640,14 @@ def price_forecast(crop_id):
             "best_week":     best_week,
             "max_price":     max_price,
             "advice": {
-                "best_time_to_sell": f"Week {best_week} ({best_date})",  # † Flutter reads this
+                "best_time_to_sell": f"Week {best_week} ({best_date})" if is_meaningful_swing else "Anytime - stable price",  # † Flutter reads this
                 "peak_price":        max_price,                           # † Flutter reads this
-                "tip_en": f"Best time to sell {crop_name} is Week {best_week} "
-                          f"when price peaks at {max_price} RWF/kg.",
-                "tip_rw": (lambda n: f"Igihe cyiza cyo kugurisha {n} ni icyumweru cya {best_week} igiciro kigera ku {max_price} RWF/kg.")({1:'Ibirayi',2:'Ibigori',3:'Ibishyimbo',4:'Inyanya',5:'Isorgho',6:'Ingano',7:'Umuneke'}.get(crop_id, crop_name)),
+                "tip_en": (f"Best time to sell {crop_name} is Week {best_week} "
+                           f"when price peaks at {max_price} RWF/kg.") if is_meaningful_swing
+                          else (f"{crop_name} prices are stable around {current_price} RWF/kg with no strong "
+                                f"seasonal peak expected -- timing your sale has little price advantage."),
+                "tip_rw": (lambda n: (f"Igihe cyiza cyo kugurisha {n} ni icyumweru cya {best_week} igiciro kigera ku {max_price} RWF/kg.") if is_meaningful_swing
+                          else (f"Igiciro cya {n} ntirihinduka cyane, riri hafi ya {current_price} RWF/kg. Nta gihe cy\'ibanze cyo kugurisha kigaragara -- gutegereza ntibikuhera inyungu nyinshi."))({1:'Ibirayi',2:'Ibigori',3:'Ibishyimbo',4:'Inyanya',5:'Isorgho',6:'Ingano',7:'Umuneke'}.get(crop_id, crop_name)),
             }
         })
     except Exception as e:
